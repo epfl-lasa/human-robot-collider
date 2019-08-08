@@ -1,0 +1,384 @@
+<?xml version='1.0'?>
+
+<!-- 
+THIS FILE IS UNFINISHED.
+-->
+
+<sdf version='1.4'>
+  <model name="human adult">
+    <pose>0 0 1.1025 1.570796 0 0</pose>
+
+    <link name="chest">
+      <pose>0 0.18375 0 0 0 0</pose>
+      <collision>
+        <geometry>
+          <cylinder>
+            <radius>0.02</radius>
+            <length>0.3675</length>
+          </cylinder>
+        </geometry>
+        <pose>0 0 0 1.570796 0 0</pose>
+      </collision>
+    </link>
+
+    <!-- 
+    downwards from the chest 
+    ************************
+    -->
+
+    <link name="belly">
+      <pose>0 -0.0525 0 0 0 0</pose>
+      <collision>
+        <geometry>
+          <cylinder>
+            <radius>0.02</radius>
+            <length>0.105</length>
+          </cylinder>
+        </geometry>
+        <pose>0 0 0 1.570796 0 0</pose>
+      </collision>
+    </link>
+
+    <joint name="chest_to_belly" type="spherical">
+      <parent>chest</parent>
+      <child>belly</child>
+      <pose>0 0.0525 0 0 0 0</pose>
+    </joint>
+
+    <link name="pelvis">
+      <pose>0 -0.14 0 0 0 0</pose>
+      <collision>
+        <geometry>
+          <cylinder>
+            <radius>0.02</radius>
+            <length>0.07</length>
+          </cylinder>
+        </geometry>
+        <pose>0 0 0 1.570796 0 0</pose>
+      </collision>
+      <collision>
+        <geometry>
+          <cylinder>
+            <radius>0.02</radius>
+            <length>0.182</length>
+          </cylinder>
+        </geometry>
+        <pose>0 -0.035 0 0 1.570796 0</pose>
+      </collision>
+    </link>
+
+    <joint name="belly_to_pelvis" type="spherical">
+      <parent>belly</parent>
+      <child>pelvis</child>
+      <pose>0 0.035 0 0 0 0</pose>
+    </joint>
+
+    <link name="right_leg">
+      <pose>-0.091 -0.389375 0 0 0 0</pose>
+      <collision>
+        <geometry>
+          <cylinder>
+            <radius>0.02</radius>
+            <length>0.42875</length>
+          </cylinder>
+        </geometry>
+        <pose>0 0 0 1.570796 0 0</pose>
+      </collision>
+    </link>
+
+    <joint name="pelvis_to_right_leg" type="spherical">
+      <parent>pelvis</parent>
+      <child>right_leg</child>
+      <pose>0 0.214375 0 0 0 0</pose>
+    </joint>
+
+    <link name="left_leg">
+      <pose>0.091 -0.389375 0 0 0 0</pose>
+      <collision>
+        <geometry>
+          <cylinder>
+            <radius>0.02</radius>
+            <length>0.42875</length>
+          </cylinder>
+        </geometry>
+        <pose>0 0 0 1.570796 0 0</pose>
+      </collision>
+    </link>
+
+    <joint name="pelvis_to_left_leg" type="spherical">
+      <parent>pelvis</parent>
+      <child>left_leg</child>
+      <pose>0 0.214375 0 0 0 0</pose>
+    </joint>
+<!--
+    <link name="right_shin">
+      <pose>-0.091 -0.819 0 0 0 0</pose>
+      <collision>
+        <geometry>
+          <cylinder>
+            <radius>0.02</radius>
+            <length>0.4305</length>
+          </cylinder>
+        </geometry>
+        <pose>0 0 0 1.570796 0 0</pose>
+      </collision>
+    </link>
+
+    <joint name="right_leg_to_right_shin" type="continuous">
+      <parent link="right_leg"/>
+      <child link="right_shin"/>
+      <axis>
+        <xyz>1 0 0</xyz>
+      </axis>
+      <pose>0 0.21525 0 0 0 0</pose>
+    </joint>
+<!--
+    <link name="left_shin">
+      <collision>
+        <geometry>
+          <cylinder length="0.4305" radius="0.02"/>
+        </geometry>
+        <origin rpy="1.570796 0 0" xyz="0 -0.21525 0"/>
+      </collision>
+    </link>
+
+    <joint name="left_leg_to_left_shin" type="continuous">
+      <parent link="left_leg"/>
+      <child link="left_shin"/>
+      <axis xyz="1 0 0"/>
+      <origin xyz="0 -0.42875 0"/>
+    </joint>
+
+    <link name="right_foot">
+      <collision>
+        <geometry>
+          <cylinder length="0.06825" radius="0.02"/>
+        </geometry>
+        <origin rpy="1.570796 0 0" xyz="0 -0.034125 0"/>
+      </collision>
+    </link>
+
+    <joint name="right_shin_to_right_foot" type="continuous">
+      <parent link="right_shin"/>
+      <child link="right_foot"/>
+      <axis xyz="1 0 0"/>
+      <origin xyz="0 -0.4305 0"/>
+    </joint>
+
+    <link name="left_foot">
+      <collision>
+        <geometry>
+          <cylinder length="0.06825" radius="0.02"/>
+        </geometry>
+        <origin rpy="1.570796 0 0" xyz="0 -0.034125 0"/>
+      </collision>
+    </link>
+
+    <joint name="left_shin_to_left_foot" type="continuous">
+      <parent link="left_shin"/>
+      <child link="left_foot"/>
+      <axis xyz="1 0 0"/>
+      <origin xyz="0 -0.4305 0"/>
+    </joint>
+-->
+    <!-- 
+    upwards from the chest 
+    **********************
+    -->
+<!--
+    <link name="chest_horizontal_bar">
+      <collision>
+        <geometry>
+          <cylinder length="0.3045" radius="0.02"/>
+        </geometry>
+        <origin rpy="0 1.570796 0" xyz="0 0.329 0"/>
+      </collision>
+    </link>
+
+    <joint name="chest_to_chest_horizontal_bar" type="fixed">
+      <parent link="chest"/>
+      <child link="chest_horizontal_bar"/>
+      <origin xyz="0 0 0"/>
+    </joint>
+
+    <link name="right_shoulder">
+      <collision>
+        <geometry>
+          <cylinder length="0.04025" radius="0.02"/>
+        </geometry>
+        <origin rpy="0 1.570796 0" xyz="-0.020125 0 0"/>
+      </collision>
+    </link>
+
+    <joint name="chest_to_right_shoulder" type="continuous">
+      <parent link="chest"/>
+      <child link="right_shoulder"/>
+      <axis xyz="0 0 1"/>
+      <origin xyz="-0.15225 0.329 0"/>
+    </joint>
+
+    <link name="left_shoulder">
+      <collision>
+        <geometry>
+          <cylinder length="0.04025" radius="0.02"/>
+        </geometry>
+        <origin rpy="0 1.570796 0" xyz="0.020125 0 0"/>
+      </collision>
+    </link>
+
+    <joint name="chest_to_left_shoulder" type="continuous">
+      <parent link="chest"/>
+      <child link="left_shoulder"/>
+      <axis xyz="0 0 1"/>
+      <origin xyz="0.15225 0.329 0"/>
+    </joint>
+
+    <link name="right_arm">
+      <collision>
+        <geometry>
+          <cylinder length="0.329" radius="0.02"/>
+        </geometry>
+        <origin rpy="1.570796 0 0" xyz="0 -0.1645 0"/>
+      </collision>
+    </link>
+
+    <joint name="right_shoulder_to_right_arm" type="continuous">
+      <parent link="right_shoulder"/>
+      <child link="right_arm"/>
+      <axis xyz="1 0 0"/>
+      <origin xyz="-0.04025 0 0"/>
+    </joint>
+
+    <link name="left_arm">
+      <collision>
+        <geometry>
+          <cylinder length="0.329" radius="0.02"/>
+        </geometry>
+        <origin rpy="1.570796 0 0" xyz="0 -0.1645 0"/>
+      </collision>
+    </link>
+
+    <joint name="left_shoulder_to_left_arm" type="continuous">
+      <parent link="left_shoulder"/>
+      <child link="left_arm"/>
+      <axis xyz="1 0 0"/>
+      <origin xyz="0.04025 0 0"/>
+    </joint>
+
+    <link name="right_forearm">
+      <collision>
+        <geometry>
+          <cylinder length="0.25375" radius="0.02"/>
+        </geometry>
+        <origin rpy="1.570796 0 0" xyz="0 -0.126875 0"/>
+      </collision>
+    </link>
+
+    <joint name="right_arm_to_right_forearm" type="continuous">
+      <parent link="right_arm"/>
+      <child link="right_forearm"/>
+      <axis xyz="1 0 0"/>
+      <origin xyz="0 -0.329 0"/>
+    </joint>
+
+    <link name="left_forearm">
+      <collision>
+        <geometry>
+          <cylinder length="0.25375" radius="0.02"/>
+        </geometry>
+        <origin rpy="1.570796 0 0" xyz="0 -0.126875 0"/>
+      </collision>
+    </link>
+
+    <joint name="left_arm_to_left_forearm" type="continuous">
+      <parent link="left_arm"/>
+      <child link="left_forearm"/>
+      <axis xyz="1 0 0"/>
+      <origin xyz="0 -0.329 0"/>
+    </joint>
+
+    <link name="right_hand">
+      <collision>
+        <geometry>
+          <cylinder length="0.189" radius="0.02"/>
+        </geometry>
+        <origin rpy="1.570796 0 0" xyz="0 -0.0945 0"/>
+      </collision>
+    </link>
+
+    <joint name="right_forearm_to_right_hand" type="spherical">
+      <parent link="right_forearm"/>
+      <child link="right_hand"/>
+      <origin xyz="0 -0.25375 0"/>
+    </joint>
+
+    <link name="left_hand">
+      <collision>
+        <geometry>
+          <cylinder length="0.189" radius="0.02"/>
+        </geometry>
+        <origin rpy="1.570796 0 0" xyz="0 -0.0945 0"/>
+      </collision>
+    </link>
+
+    <joint name="left_forearm_to_left_hand" type="spherical">
+      <parent link="left_forearm"/>
+      <child link="left_hand"/>
+      <origin xyz="0 -0.25375 0"/>
+    </joint>
+
+    <link name="neck">
+      <collision>
+        <geometry>
+          <cylinder length="0.0525" radius="0.02"/>
+        </geometry>
+        <origin rpy="1.570796 0 0" xyz="0 0.02625 0"/>
+      </collision>
+    </link>
+
+    <joint name="chest_to_neck" type="spherical">
+      <parent link="chest"/>
+      <child link="neck"/>
+      <origin xyz="0 0.3675 0"/>
+    </joint>
+
+    <link name="head">
+      <collision>
+        <geometry>
+          <cylinder length="0.2275" radius="0.02"/>
+        </geometry>
+        <origin rpy="1.570796 0 0" xyz="0 0.11375 0"/>
+      </collision>
+    </link>
+
+    <joint name="neck_to_head" type="spherical">
+      <parent link="neck"/>
+      <child link="head"/>
+      <origin xyz="0 0.0525 0"/>
+    </joint>
+-->
+  </model>
+</sdf>
+
+<!--
+<model name="two_links_orthogonal_1">
+  <link name="linkA">
+    <pose>0 0 0 0 0 0</pose>
+  </link>
+  <link name="linkB">
+    <pose>0.1 0 0.1 0 0 0</pose>
+  </link>
+  <joint name="jointAB" type="revolute">
+    <pose>0 0 -0.1 0 0 0</pose>
+    <parent>linkA</parent>
+    <child>linkB</child>
+    <axis>
+      <xyz>0 1 0</xyz>
+    </axis>
+  </joint>
+  <joint name="joint_world" type="fixed">
+    <parent>world</parent>
+    <child>linkA</child>
+  </joint>
+</model>
+-->

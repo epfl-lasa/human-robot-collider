@@ -1,0 +1,444 @@
+<?xml version="1.0"?>
+
+<!-- This implements the reference model from
+https://mmm.humanoids.kit.edu/referencemodel.html
+with a height of H = 1.75. This model is based on the one from
+"Biomechanics and motor control of human movement", David A. Winter
+-->
+
+<robot name="human adult">
+  <link name="chest">
+    <inertial>
+      <origin rpy = "0 0 0" xyz = "0 0 0" />
+      <mass value = "5.0001" />
+      <inertia ixx = "5.0001" ixy = "0" ixz = "0" iyy = "5.0001" iyz = "0" izz = "1.0001" />
+    </inertial>
+    <collision>
+      <geometry>
+        <cylinder length="0.3675" radius="0.02"/>
+      </geometry>
+      <origin rpy="1.570796 0 0" xyz="0 0.18375 0"/>
+    </collision>
+  </link>
+
+<!-- 
+	downwards from the chest 
+	************************
+-->
+
+  <link name="belly">
+    <inertial>
+      <origin rpy = "0 0 0" xyz = "0 0 0" />
+      <mass value = "5.0001" />
+      <inertia ixx = "5.0001" ixy = "0" ixz = "0" iyy = "5.0001" iyz = "0" izz = "1.0001" />
+    </inertial>
+    <collision>
+      <geometry>
+        <cylinder length="0.105" radius="0.02"/>
+      </geometry>
+      <origin rpy="1.570796 0 0" xyz="0 -0.0525 0"/>
+    </collision>
+  </link>
+
+  <joint name="chest_to_belly" type="spherical">
+    <parent link="chest"/>
+    <child link="belly"/>
+    <origin xyz="0 0 0"/>
+  </joint>
+
+  <link name="pelvis">
+    <inertial>
+      <origin rpy = "0 0 0" xyz = "0 0 0" />
+      <mass value = "5.0001" />
+      <inertia ixx = "5.0001" ixy = "0" ixz = "0" iyy = "5.0001" iyz = "0" izz = "1.0001" />
+    </inertial>
+    <collision>
+      <geometry>
+        <cylinder length="0.07" radius="0.02"/>
+      </geometry>
+      <origin rpy="1.570796 0 0" xyz="0 -0.035 0"/>
+    </collision>
+  </link>
+
+  <joint name="belly_to_pelvis" type="spherical">
+    <parent link="belly"/>
+    <child link="pelvis"/>
+    <origin xyz="0 -0.105 0"/>
+  </joint>
+
+  <link name="pelvis_horizontal_bar">
+    <inertial>
+      <origin rpy = "0 0 0" xyz = "0 0 0" />
+      <mass value = "5.0001" />
+      <inertia ixx = "5.0001" ixy = "0" ixz = "0" iyy = "1.0001" iyz = "0" izz = "5.0001" />
+    </inertial>
+    <collision>
+      <geometry>
+        <cylinder length="0.182" radius="0.02"/>
+      </geometry>
+      <origin rpy="0 1.570796 0" xyz="0 -0.07 0"/>
+    </collision>
+  </link>
+
+  <joint name="pelvis_to_pelvis_horizontal_bar" type="fixed">
+    <parent link="pelvis"/>
+    <child link="pelvis_horizontal_bar"/>
+    <origin xyz="0 0 0"/>
+  </joint>
+
+  <link name="right_leg">
+    <inertial>
+      <origin rpy = "0 0 0" xyz = "0 0 0" />
+      <mass value = "5.0001" />
+      <inertia ixx = "5.0001" ixy = "0" ixz = "0" iyy = "5.0001" iyz = "0" izz = "1.0001" />
+    </inertial>
+    <collision>
+      <geometry>
+        <cylinder length="0.42875" radius="0.02"/>
+      </geometry>
+      <origin rpy="1.570796 0 0" xyz="0 -0.214375 0"/>
+    </collision>
+  </link>
+
+  <joint name="pelvis_to_right_leg" type="spherical">
+    <parent link="pelvis"/>
+    <child link="right_leg"/>
+    <origin xyz="-0.091 -0.07 0"/>
+  </joint>
+
+  <link name="left_leg">
+    <inertial>
+      <origin rpy = "0 0 0" xyz = "0 0 0" />
+      <mass value = "5.0001" />
+      <inertia ixx = "5.0001" ixy = "0" ixz = "0" iyy = "5.0001" iyz = "0" izz = "1.0001" />
+    </inertial>
+    <collision>
+      <geometry>
+        <cylinder length="0.42875" radius="0.02"/>
+      </geometry>
+      <origin rpy="1.570796 0 0" xyz="0 -0.214375 0"/>
+    </collision>
+  </link>
+
+  <joint name="pelvis_to_left_leg" type="spherical">
+    <parent link="pelvis"/>
+    <child link="left_leg"/>
+    <origin xyz="0.091 -0.07 0"/>
+  </joint>
+
+  <link name="right_shin">
+    <inertial>
+      <origin rpy = "0 0 0" xyz = "0 0 0" />
+      <mass value = "5.0001" />
+      <inertia ixx = "5.0001" ixy = "0" ixz = "0" iyy = "5.0001" iyz = "0" izz = "1.0001" />
+    </inertial>
+    <collision>
+      <geometry>
+        <cylinder length="0.4305" radius="0.02"/>
+      </geometry>
+      <origin rpy="1.570796 0 0" xyz="0 -0.21525 0"/>
+    </collision>
+  </link>
+
+  <joint name="right_leg_to_right_shin" type="continuous">
+    <parent link="right_leg"/>
+    <child link="right_shin"/>
+    <axis xyz="1 0 0"/>
+    <origin xyz="0 -0.42875 0"/>
+  </joint>
+
+  <link name="left_shin">
+    <inertial>
+      <origin rpy = "0 0 0" xyz = "0 0 0" />
+      <mass value = "5.0001" />
+      <inertia ixx = "5.0001" ixy = "0" ixz = "0" iyy = "5.0001" iyz = "0" izz = "1.0001" />
+    </inertial>
+    <collision>
+      <geometry>
+        <cylinder length="0.4305" radius="0.02"/>
+      </geometry>
+      <origin rpy="1.570796 0 0" xyz="0 -0.21525 0"/>
+    </collision>
+  </link>
+
+  <joint name="left_leg_to_left_shin" type="continuous">
+    <parent link="left_leg"/>
+    <child link="left_shin"/>
+    <axis xyz="1 0 0"/>
+    <origin xyz="0 -0.42875 0"/>
+  </joint>
+
+  <link name="right_foot">
+    <inertial>
+      <origin rpy = "0 0 0" xyz = "0 0 0" />
+      <mass value = "5.0001" />
+      <inertia ixx = "5.0001" ixy = "0" ixz = "0" iyy = "5.0001" iyz = "0" izz = "1.0001" />
+    </inertial>
+    <collision>
+      <geometry>
+        <cylinder length="0.06825" radius="0.02"/>
+      </geometry>
+      <origin rpy="1.570796 0 0" xyz="0 -0.034125 0"/>
+    </collision>
+  </link>
+
+  <joint name="right_shin_to_right_foot" type="spherical">
+    <parent link="right_shin"/>
+    <child link="right_foot"/>
+<!--<axis xyz="1 0 0"/>-->
+    <origin xyz="0 -0.4305 0"/>
+  </joint>
+
+  <link name="left_foot">
+    <inertial>
+      <origin rpy = "0 0 0" xyz = "0 0 0" />
+      <mass value = "5.0001" />
+      <inertia ixx = "5.0001" ixy = "0" ixz = "0" iyy = "5.0001" iyz = "0" izz = "1.0001" />
+    </inertial>
+    <collision>
+      <geometry>
+        <cylinder length="0.06825" radius="0.02"/>
+      </geometry>
+      <origin rpy="1.570796 0 0" xyz="0 -0.034125 0"/>
+    </collision>
+  </link>
+
+  <joint name="left_shin_to_left_foot" type="spherical">
+    <parent link="left_shin"/>
+    <child link="left_foot"/>
+<!--<axis xyz="1 0 0"/>-->
+    <origin xyz="0 -0.4305 0"/>
+  </joint>
+
+<!-- 
+	upwards from the chest 
+	**********************
+-->
+
+  <link name="chest_horizontal_bar">
+    <inertial>
+      <origin rpy = "0 0 0" xyz = "0 0 0" />
+      <mass value = "5.0001" />
+      <inertia ixx = "5.0001" ixy = "0" ixz = "0" iyy = "1.0001" iyz = "0" izz = "5.0001" />
+    </inertial>
+    <collision>
+      <geometry>
+        <cylinder length="0.3045" radius="0.02"/>
+      </geometry>
+      <origin rpy="0 1.570796 0" xyz="0 0.329 0"/>
+    </collision>
+  </link>
+
+  <joint name="chest_to_chest_horizontal_bar" type="fixed">
+    <parent link="chest"/>
+    <child link="chest_horizontal_bar"/>
+    <origin xyz="0 0 0"/>
+  </joint>
+
+  <link name="right_shoulder">
+    <inertial>
+      <origin rpy = "0 0 0" xyz = "0 0 0" />
+      <mass value = "5.0001" />
+      <inertia ixx = "5.0001" ixy = "0" ixz = "0" iyy = "1.0001" iyz = "0" izz = "5.0001" />
+    </inertial>
+    <collision>
+      <geometry>
+        <cylinder length="0.04025" radius="0.02"/>
+      </geometry>
+      <origin rpy="0 1.570796 0" xyz="-0.020125 0 0"/>
+    </collision>
+  </link>
+
+  <joint name="chest_to_right_shoulder" type="fixed">
+    <parent link="chest"/>
+    <child link="right_shoulder"/>
+<!--<axis xyz="0 0 1"/>-->
+    <origin xyz="-0.15225 0.329 0"/>
+  </joint>
+
+  <link name="left_shoulder">
+    <inertial>
+      <origin rpy = "0 0 0" xyz = "0 0 0" />
+      <mass value = "5.0001" />
+      <inertia ixx = "5.0001" ixy = "0" ixz = "0" iyy = "1.0001" iyz = "0" izz = "5.0001" />
+    </inertial>
+    <collision>
+      <geometry>
+        <cylinder length="0.04025" radius="0.02"/>
+      </geometry>
+      <origin rpy="0 1.570796 0" xyz="0.020125 0 0"/>
+    </collision>
+  </link>
+
+  <joint name="chest_to_left_shoulder" type="fixed">
+    <parent link="chest"/>
+    <child link="left_shoulder"/>
+<!--<axis xyz="0 0 1"/>-->
+    <origin xyz="0.15225 0.329 0"/>
+  </joint>
+
+  <link name="right_arm">
+    <inertial>
+      <origin rpy = "0 0 0" xyz = "0 0 0" />
+      <mass value = "5.0001" />
+      <inertia ixx = "5.0001" ixy = "0" ixz = "0" iyy = "5.0001" iyz = "0" izz = "1.0001" />
+    </inertial>
+    <collision>
+      <geometry>
+        <cylinder length="0.329" radius="0.02"/>
+      </geometry>
+      <origin rpy="1.570796 0 0" xyz="0 -0.1645 0"/>
+    </collision>
+  </link>
+
+  <joint name="right_shoulder_to_right_arm" type="spherical">
+    <parent link="right_shoulder"/>
+    <child link="right_arm"/>
+<!--<axis xyz="1 0 0"/>-->
+    <origin xyz="-0.04025 0 0"/>
+  </joint>
+
+  <link name="left_arm">
+    <inertial>
+      <origin rpy = "0 0 0" xyz = "0 0 0" />
+      <mass value = "5.0001" />
+      <inertia ixx = "5.0001" ixy = "0" ixz = "0" iyy = "5.0001" iyz = "0" izz = "1.0001" />
+    </inertial>
+    <collision>
+      <geometry>
+        <cylinder length="0.329" radius="0.02"/>
+      </geometry>
+      <origin rpy="1.570796 0 0" xyz="0 -0.1645 0"/>
+    </collision>
+  </link>
+
+  <joint name="left_shoulder_to_left_arm" type="spherical">
+    <parent link="left_shoulder"/>
+    <child link="left_arm"/>
+<!--<axis xyz="1 0 0"/>-->
+    <origin xyz="0.04025 0 0"/>
+  </joint>
+
+  <link name="right_forearm">
+    <inertial>
+      <origin rpy = "0 0 0" xyz = "0 0 0" />
+      <mass value = "5.0001" />
+      <inertia ixx = "5.0001" ixy = "0" ixz = "0" iyy = "5.0001" iyz = "0" izz = "1.0001" />
+    </inertial>
+    <collision>
+      <geometry>
+        <cylinder length="0.25375" radius="0.02"/>
+      </geometry>
+      <origin rpy="1.570796 0 0" xyz="0 -0.126875 0"/>
+    </collision>
+  </link>
+
+  <joint name="right_arm_to_right_forearm" type="continuous">
+    <parent link="right_arm"/>
+    <child link="right_forearm"/>
+    <axis xyz="1 0 0"/>
+    <origin xyz="0 -0.329 0"/>
+  </joint>
+
+  <link name="left_forearm">
+    <inertial>
+      <origin rpy = "0 0 0" xyz = "0 0 0" />
+      <mass value = "5.0001" />
+      <inertia ixx = "5.0001" ixy = "0" ixz = "0" iyy = "5.0001" iyz = "0" izz = "1.0001" />
+    </inertial>
+    <collision>
+      <geometry>
+        <cylinder length="0.25375" radius="0.02"/>
+      </geometry>
+      <origin rpy="1.570796 0 0" xyz="0 -0.126875 0"/>
+    </collision>
+  </link>
+
+  <joint name="left_arm_to_left_forearm" type="continuous">
+    <parent link="left_arm"/>
+    <child link="left_forearm"/>
+    <axis xyz="1 0 0"/>
+    <origin xyz="0 -0.329 0"/>
+  </joint>
+
+  <link name="right_hand">
+    <inertial>
+      <origin rpy = "0 0 0" xyz = "0 0 0" />
+      <mass value = "5.0001" />
+      <inertia ixx = "5.0001" ixy = "0" ixz = "0" iyy = "5.0001" iyz = "0" izz = "1.0001" />
+    </inertial>
+    <collision>
+      <geometry>
+        <cylinder length="0.189" radius="0.02"/>
+      </geometry>
+      <origin rpy="1.570796 0 0" xyz="0 -0.0945 0"/>
+    </collision>
+  </link>
+
+  <joint name="right_forearm_to_right_hand" type="spherical">
+    <parent link="right_forearm"/>
+    <child link="right_hand"/>
+    <origin xyz="0 -0.25375 0"/>
+  </joint>
+
+  <link name="left_hand">
+    <inertial>
+      <origin rpy = "0 0 0" xyz = "0 0 0" />
+      <mass value = "5.0001" />
+      <inertia ixx = "5.0001" ixy = "0" ixz = "0" iyy = "5.0001" iyz = "0" izz = "1.0001" />
+    </inertial>
+    <collision>
+      <geometry>
+        <cylinder length="0.189" radius="0.02"/>
+      </geometry>
+      <origin rpy="1.570796 0 0" xyz="0 -0.0945 0"/>
+    </collision>
+  </link>
+
+  <joint name="left_forearm_to_left_hand" type="spherical">
+    <parent link="left_forearm"/>
+    <child link="left_hand"/>
+    <origin xyz="0 -0.25375 0"/>
+  </joint>
+
+  <link name="neck">
+    <inertial>
+      <origin rpy = "0 0 0" xyz = "0 0 0" />
+      <mass value = "5.0001" />
+      <inertia ixx = "5.0001" ixy = "0" ixz = "0" iyy = "5.0001" iyz = "0" izz = "1.0001" />
+    </inertial>
+    <collision>
+      <geometry>
+        <cylinder length="0.0525" radius="0.02"/>
+      </geometry>
+      <origin rpy="1.570796 0 0" xyz="0 0.02625 0"/>
+    </collision>
+  </link>
+
+  <joint name="chest_to_neck" type="spherical">
+    <parent link="chest"/>
+    <child link="neck"/>
+    <origin xyz="0 0.3675 0"/>
+  </joint>
+
+  <link name="head">
+    <inertial>
+      <origin rpy = "0 0 0" xyz = "0 0 0" />
+      <mass value = "5.0001" />
+      <inertia ixx = "5.0001" ixy = "0" ixz = "0" iyy = "5.0001" iyz = "0" izz = "1.0001" />
+    </inertial>
+    <collision>
+      <geometry>
+        <cylinder length="0.2275" radius="0.02"/>
+      </geometry>
+      <origin rpy="1.570796 0 0" xyz="0 0.11375 0"/>
+    </collision>
+  </link>
+
+  <joint name="neck_to_head" type="spherical">
+    <parent link="neck"/>
+    <child link="head"/>
+    <origin xyz="0 0.0525 0"/>
+  </joint>
+
+</robot>
