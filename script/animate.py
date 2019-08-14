@@ -258,6 +258,7 @@ for t in range(len(root[0][3])):
 		float(value_string_list[10]),
 		float(value_string_list[11]))
 
+	### THIS ROTATION MIGHT BE AROUND THE FOOT AXIS INSTEAD OF X-AXIS!!!!!!!
 	# right foot to right sole
 	p.resetJointState(human_adult_ID, 20, -float(value_string_list[43]))
 	# left foot to left sole
