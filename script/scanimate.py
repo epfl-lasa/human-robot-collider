@@ -113,11 +113,11 @@ def applyMMMTranslationToURDFBody(urdf_body_id, tx, ty, tz):
 
 	# get the translation to the left leg frame
 	tllcom, rllcom, tlllcom, rlllcom, translation_to_left_leg_frame, rllf, vll, omegall = p.getLinkState(
-		urdf_body_id, 1, True, True)
+		urdf_body_id, 3, True, True)
 
 	# get the translation to the right leg frame
 	trlcom, rrlcom, trllcom, rrllcom, translation_to_right_leg_frame, rrlf, vrl, omegarl = p.getLinkState(
-		urdf_body_id, 1, True, True)
+		urdf_body_id, 2, True, True)
 
 	t_base_com, r_base_com = p.getBasePositionAndOrientation(urdf_body_id)
 
@@ -136,7 +136,6 @@ def applyMMMTranslationToURDFBody(urdf_body_id, tx, ty, tz):
 
 # load the human-adult model
 physicsClient = p.connect(p.GUI)
-#human_adult_ID = p.loadURDF("../data/human_adult_with_feet.urdf",
 human_adult_ID = p.loadURDF("../data/human_adult_scan.urdf",
 	flags=p.URDF_MAINTAIN_LINK_ORDER)
 
@@ -152,7 +151,7 @@ for sd in shape_data_list:
 p.resetDebugVisualizerCamera(cameraDistance=3, 
 	cameraYaw=-90, cameraPitch=-25, cameraTargetPosition=[-2,0,0])
 
-time.sleep(1.0)
+time.sleep(2.0)
 
 joint_position_trajectories = np.zeros([len(root[0][3]), 44])
 pose_trajectories = np.zeros([len(root[0][3]), 6])
@@ -196,83 +195,82 @@ for t in range(len(root[0][3])):
 		float(value_string_list[5]), inverse = True)
 
 	# pelvis to right leg
-	applyMMMRotationToURDFJoint(human_adult_ID, 3,
+	applyMMMRotationToURDFJoint(human_adult_ID, 2,
 		float(value_string_list[33]),
 		float(value_string_list[34]),
 		float(value_string_list[35]))
 	# pelvis to left leg
-	applyMMMRotationToURDFJoint(human_adult_ID, 4,
+	applyMMMRotationToURDFJoint(human_adult_ID, 3,
 		float(value_string_list[17]),
 		float(value_string_list[18]),
 		float(value_string_list[19]))
 	
 	# right leg to right shin
-	p.resetJointState(human_adult_ID, 5, -float(value_string_list[36]))
+	p.resetJointState(human_adult_ID, 4, -float(value_string_list[36]))
 	# left leg to left shin
-	p.resetJointState(human_adult_ID, 6, -float(value_string_list[20]))
+	p.resetJointState(human_adult_ID, 5, -float(value_string_list[20]))
 
 	# right shin to right foot
-	applyMMMRotationToURDFJoint(human_adult_ID, 7,
+	applyMMMRotationToURDFJoint(human_adult_ID, 6,
 		float(value_string_list[28]),
 		float(value_string_list[29]),
 		float(value_string_list[30]))
 	# left shin to left foot
-	applyMMMRotationToURDFJoint(human_adult_ID, 8,
+	applyMMMRotationToURDFJoint(human_adult_ID, 7,
 		float(value_string_list[12]),
 		float(value_string_list[13]),
 		float(value_string_list[14]))
 
 	# right_shoulder_to_right_arm
-	applyMMMRotationToURDFJoint(human_adult_ID, 12,
+	applyMMMRotationToURDFJoint(human_adult_ID, 10,
 		float(value_string_list[37]),
 		float(value_string_list[38]),
 		float(value_string_list[39]))
 
 	# left_shoulder_to_left_arm
-	applyMMMRotationToURDFJoint(human_adult_ID, 13,
+	applyMMMRotationToURDFJoint(human_adult_ID, 11,
 		float(value_string_list[21]),
 		float(value_string_list[22]),
 		float(value_string_list[23]))
 
 	# right arm to right forearm
-	p.resetJointState(human_adult_ID, 14, -float(value_string_list[31]))
+	p.resetJointState(human_adult_ID, 12, -float(value_string_list[31]))
 	# left arm to left forearm
-	p.resetJointState(human_adult_ID, 15, -float(value_string_list[15]))
+	p.resetJointState(human_adult_ID, 13, -float(value_string_list[15]))
 
 	# right_forearm_to_right_hand
-	applyMMMRotationToURDFJoint(human_adult_ID, 16,
+	applyMMMRotationToURDFJoint(human_adult_ID, 14,
 		float(value_string_list[40]),
 		float(value_string_list[41]),
 		0.0)
 
 	# left_forearm_to_left_hand
-	applyMMMRotationToURDFJoint(human_adult_ID, 17,
+	applyMMMRotationToURDFJoint(human_adult_ID, 15,
 		float(value_string_list[24]),
 		float(value_string_list[25]),
 		0.0)
 
 	# chest_to_neck
-	applyMMMRotationToURDFJoint(human_adult_ID, 18,
+	applyMMMRotationToURDFJoint(human_adult_ID, 16,
 		float(value_string_list[0]),
 		float(value_string_list[1]),
 		float(value_string_list[2]))
 
 	# neck_to_head
-	applyMMMRotationToURDFJoint(human_adult_ID, 19,
+	applyMMMRotationToURDFJoint(human_adult_ID, 17,
 		float(value_string_list[9]),
 		float(value_string_list[10]),
 		float(value_string_list[11]))
 
-	### THIS ROTATION MIGHT BE AROUND THE FOOT AXIS INSTEAD OF X-AXIS!!!!!!!
 	# right foot to right sole
-	p.resetJointState(human_adult_ID, 20, -float(value_string_list[43]))
+	p.resetJointState(human_adult_ID, 18, float(value_string_list[43]))
 	# left foot to left sole
-	p.resetJointState(human_adult_ID, 21, -float(value_string_list[27]))
+	p.resetJointState(human_adult_ID, 19, float(value_string_list[27]))
 
 	# right sole to right toes
-	p.resetJointState(human_adult_ID, 22, -float(value_string_list[42]))
+	p.resetJointState(human_adult_ID, 20, -float(value_string_list[42]))
 	# left sole to left toes
-	p.resetJointState(human_adult_ID, 23, -float(value_string_list[26]))
+	p.resetJointState(human_adult_ID, 21, -float(value_string_list[26]))
 
 	# Base rotation and Zero Translation (for now)
 	applyMMMRotationAndZeroTranslationToURDFBody(human_adult_ID,
