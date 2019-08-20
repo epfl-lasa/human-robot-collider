@@ -44,14 +44,14 @@ class Man:
 	def resetToReference(self):
 		pass
 
-	def resetGlobalTransformation(self, xyz, rpy):
+	def resetGlobalTransformation(self, xyz, rpy, gait_phase_value = 0):
 		for i in range(3):
 			self.global_xyz[i] = xyz[i]
 			self.global_rpy[i] = rpy[i]
 		self.global_rpy[2] += -np.pi/2
 
 		self.other_xyz[0] = 0.0
-		self.setGaitPhase(0)
+		self.setGaitPhase(gait_phase_value)
 		
 
 	def setGaitPhase(self, period_fraction):
