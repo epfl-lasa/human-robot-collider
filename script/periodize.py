@@ -148,6 +148,30 @@ plt.plot(RBProcessed[:, 2],'b:')
 plt.title("Processed base rotations in time window")
 plt.show()
 
+# extract the periodic lateral and vertical motion
+# compute the base positions' FFTs
+PB = pose_trajectories[T,0:3]
+PBFFT = np.zeros(np.shape(PB), dtype=np.cdouble)
+for j in range(3):
+	PBFFT[:,j] = np.fft.fft(PB[:,j])
+plt.plot(np.power(np.absolute(PBFFT[1:int(len(T)/2),0]), 2), 'r')
+plt.plot(np.power(np.absolute(PBFFT[1:int(len(T)/2),1]), 2), 'g')
+plt.plot(np.power(np.absolute(PBFFT[1:int(len(T)/2),2]), 2), 'b')
+plt.title("FFT of base positions in time window")
+plt.show()
+
+# remove frequencies and transform back
+PBProcessed = np.zeros(np.shape(PB))
+for j in range(3):
+	for i in range(5, len(T)-4):
+		PBFFT[i,j] = 0.0
+	PBProcessed[:,j] = np.fft.ifft(PBFFT[:,j])
+plt.plot(PBProcessed[:, 0],'r:')
+plt.plot(PBProcessed[:, 1],'g:')
+plt.plot(PBProcessed[:, 2],'b:')
+plt.title("Processed base postions in time window")
+plt.show()
+
 # Animate joints
 import pybullet as p
 import math
@@ -247,6 +271,17 @@ v_average_yz = np.array([0.0,v_average[1], v_average[2]])
 print (v_average[0],v_average[1],v_average[2])
 R_average = np.mean(RBProcessed,0)
 print (R_average[0],R_average[1],R_average[2])
+
+create_npy_files = False
+if create_npy_files:
+	RBProcessedAdjusted = np.copy(RBProcessed)
+	RBProcessedAdjusted[:,2] += -R_average[2]+np.pi/2
+	np.save("cyclic_joint_positions.npy", np.transpose(JProcessed))
+	np.save("cyclic_pelvis_rotations.npy", np.transpose(RBProcessedAdjusted))
+	np.save("cyclic_pelvis_forward_velocity.npy", VBProcessed[:,0]/1000.0)
+	np.save("cyclic_pelvis_lateral_position.npy", (PBProcessed[:, 1]- PBProcessed[0, 1])/1000.0)
+	np.save("cyclic_pelvis_vertical_position.npy", (PBProcessed[:, 2]- PBProcessed[0, 2])/1000.0)
+	np.save("cycle_time_steps.npy", time_trajectory[T] - time_trajectory[0])
 
 t = 0
 base_position = np.zeros([3,1])
@@ -361,6 +396,7 @@ while True:
 	time.sleep(0.01)
 
 	base_position[:,0] = base_position[:,0] + 0.01*(VBProcessed[t,:] - v_average_yz)/1000.0
+	#base_position[1:,0] = (PBProcessed[t, 1:]- PBProcessed[0, 1:])/1000.0
 	camera_position[:,0] = camera_position[:,0] + 0.01*(v_average-v_average_yz)/1000.0
 
 
