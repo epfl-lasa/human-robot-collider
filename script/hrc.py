@@ -3,7 +3,9 @@ from walk.walker import Man
 #import time
 
 import numpy as np
-#import scipy.io as sio
+import scipy.io as sio
+
+import argparse
 
 def case_walking_human_static_robot(robot_urdf_path,
 	orientation_list,
@@ -70,10 +72,46 @@ def reset_walker(walker, orientation, excentricity, gait_phase):
 
 
 if __name__ == '__main__':
-	result = case_walking_human_static_robot('../data/qolo_and_user.urdf',
-		list(np.linspace(0, np.pi*2, 16, False)),
-		list(np.linspace(-0.8, 0.8, 10, False)),
-		list(np.linspace(0, 1, 10, False)))
+	parser = argparse.ArgumentParser(
+		description = 'Computes contact points between a human and a robot.')
+	#parser.add_argument('robot', help='your name, enter it')
 
-	# write the result to a npy-file
-	np.save('qolo_contact_points_case_3.npy', result)
+	parser.add_argument('robot',
+		choices=['qolo','cuybot'],#,'pepper'],
+		help='Robot to collide with')
+
+	parser.add_argument('case',
+		choices=['1','2','3'],
+		help="""Experiment case.
+			Case 1: robot moves forward into the standing human.
+			Case 2: robot moves backward into the standing human.
+			Case 3: human walks forward into the standing robot.""")
+
+	args = parser.parse_args()
+
+	if args.case == '3':
+		if args.robot == 'qolo':
+			urdf_path = '../data/qolo_and_user.urdf'
+			result_name = 'qolo_contact_points_case_3'
+			orientation_list = list(np.linspace(0, np.pi*2, 16, False))
+			excentricity_list = list(np.linspace(-0.8, 0.8, 10, False))
+			gait_phase_list = list(np.linspace(0, 1, 10, False))
+		elif args.robot == 'cuybot':
+			urdf_path = '../data/cuybot.urdf'
+			result_name = 'cuybot_contact_points_case_3'
+			orientation_list = list(np.linspace(0, np.pi*2, 16, False))
+			excentricity_list = list(np.linspace(-0.6, 0.6, 11, True))
+			gait_phase_list = list(np.linspace(0, 1, 10, False))
+
+		#elif args.robot is 'pepper':
+		#	urdf_path = '../data/pepper.urdf'
+		#	result_name = 'pepper_contact_points_case_3'
+
+		result = case_walking_human_static_robot(urdf_path,
+			orientation_list,
+			excentricity_list,
+			gait_phase_list)
+
+	# write the result to a npy-file and a mat-file
+	np.save(result_name + '.npy', result)
+	sio.savemat(result_name + '.mat', {'result': result})
