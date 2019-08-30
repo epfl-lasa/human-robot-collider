@@ -6,18 +6,54 @@ import math
 
 import os
 
+# def central_differences(signal):
+# 	return np.roll(signal, -1) - np.roll(signal, 1)
+
+# class DynamicMan:
+# 	def __init__(self, pybtPhysicsClient, partitioned = False):
+# 		if partitioned:
+# 			self.body_id = p.loadURDF(#"man.urdf"
+# 				os.path.join(os.path.dirname(__file__), "man_x_partitioned.urdf"),
+# 				flags=p.URDF_MAINTAIN_LINK_ORDER,
+# 				physicsClientId = pybtPhysicsClient)
+# 		else:
+# 			self.body_id = p.loadURDF(#"man.urdf"
+# 				os.path.join(os.path.dirname(__file__), "man.urdf"),
+# 				flags=p.URDF_MAINTAIN_LINK_ORDER,
+# 				physicsClientId = pybtPhysicsClient)
+
+# 		# gait motion data
+# 		self.cyclic_joint_positions = np.load(
+# 			os.path.join(os.path.dirname(__file__), "cyclic_joint_positions.npy"))
+# 		self.cyclic_pelvis_rotations = np.load(
+# 			os.path.join(os.path.dirname(__file__), "cyclic_pelvis_rotations.npy"))
+# 		self.cyclic_pelvis_forward_velocity = np.load(
+# 			os.path.join(os.path.dirname(__file__), "cyclic_pelvis_forward_velocity.npy"))
+# 		self.cyclic_pelvis_lateral_position = np.load(
+# 			os.path.join(os.path.dirname(__file__), "cyclic_pelvis_lateral_position.npy"))
+# 		self.cyclic_pelvis_vertical_position = np.load(
+# 			os.path.join(os.path.dirname(__file__), "cyclic_pelvis_vertical_position.npy"))
+# 		self.cycle_time_steps = np.load(
+# 			os.path.join(os.path.dirname(__file__), "cycle_time_steps.npy"))
+
+# 		# compute velocities assuming a timestep of 0.01
+# 		self.cyclic_joint_velocities = central_differences(self.cyclic_joint_positions)/0.02
+# 		= central_differences(self.cyclic_joint_positions)/0.02
+
 class Man:
-	def __init__(self, pybtPhysicsClient, partitioned = False):
-		
+	def __init__(self, pybtPhysicsClient, partitioned = False, self_collisions = False):
 		if partitioned:
 			self.body_id = p.loadURDF(#"man.urdf"
 				os.path.join(os.path.dirname(__file__), "man_x_partitioned.urdf"),
 				flags=p.URDF_MAINTAIN_LINK_ORDER,
 				physicsClientId = pybtPhysicsClient)
 		else:
+			urdf_load_flags = p.URDF_MAINTAIN_LINK_ORDER
+			if self_collisions:
+				urdf_load_flags = p.URDF_MAINTAIN_LINK_ORDER | p.URDF_USE_SELF_COLLISION
 			self.body_id = p.loadURDF(#"man.urdf"
 				os.path.join(os.path.dirname(__file__), "man.urdf"),
-				flags=p.URDF_MAINTAIN_LINK_ORDER,
+				flags=urdf_load_flags,
 				physicsClientId = pybtPhysicsClient)
 
 		# pose containers
@@ -77,11 +113,27 @@ class Man:
 		self.__apply_pose()
 
 	def advance(self):
+		self.other_xyz[:] += self.cyclic_pelvis_forward_velocity[self.gait_phase_step]*0.01
+
 		self.gait_phase_step += 1
 		if self.gait_phase_step == np.size(self.cycle_time_steps):
 			self.gait_phase_step = 0
 
-		self.other_xyz[:] += self.cyclic_pelvis_forward_velocity[self.gait_phase_step]*0.01
+		self.other_xyz[1] = self.cyclic_pelvis_lateral_position[self.gait_phase_step]
+		self.other_xyz[2] = self.cyclic_pelvis_vertical_position[self.gait_phase_step]
+
+		self.other_rpy[:] = self.cyclic_pelvis_rotations[:, self.gait_phase_step]
+
+		self.joint_positions[:] = self.cyclic_joint_positions[:, self.gait_phase_step]
+
+		self.__apply_pose()
+
+	def regress(self):
+		self.other_xyz[:] -= self.cyclic_pelvis_forward_velocity[self.gait_phase_step]*0.01
+
+		self.gait_phase_step -= 1
+		if self.gait_phase_step == -1:
+			self.gait_phase_step = np.size(self.cycle_time_steps)-1
 
 		self.other_xyz[1] = self.cyclic_pelvis_lateral_position[self.gait_phase_step]
 		self.other_xyz[2] = self.cyclic_pelvis_vertical_position[self.gait_phase_step]
