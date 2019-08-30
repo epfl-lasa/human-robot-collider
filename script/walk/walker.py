@@ -7,11 +7,18 @@ import math
 import os
 
 class Man:
-	def __init__(self, pybtPhysicsClient):
-		self.body_id = p.loadURDF(#"man.urdf"
-			os.path.join(os.path.dirname(__file__), "man.urdf"),
-			flags=p.URDF_MAINTAIN_LINK_ORDER,
-			physicsClientId = pybtPhysicsClient)
+	def __init__(self, pybtPhysicsClient, partitioned = False):
+		
+		if partitioned:
+			self.body_id = p.loadURDF(#"man.urdf"
+				os.path.join(os.path.dirname(__file__), "man_x_partitioned.urdf"),
+				flags=p.URDF_MAINTAIN_LINK_ORDER,
+				physicsClientId = pybtPhysicsClient)
+		else:
+			self.body_id = p.loadURDF(#"man.urdf"
+				os.path.join(os.path.dirname(__file__), "man.urdf"),
+				flags=p.URDF_MAINTAIN_LINK_ORDER,
+				physicsClientId = pybtPhysicsClient)
 
 		# pose containers
 		self.global_xyz = np.zeros([3])

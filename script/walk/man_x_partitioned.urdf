@@ -18,7 +18,7 @@ IMPORTANT NOTE: THE INERTIAL PROPERTIES ARE NOT CORRECT (PARTICULARLY THE ORIGIN
   <link name="chest">
     <inertial>
       <origin rpy = "0 0 0" xyz = "0 0.18375 0" />
-      <mass value = "14.688" />
+      <mass value = "7.344" />
       <inertia ixx = "5.0001" ixy = "0" ixz = "0" iyy = "1.0001" iyz = "0" izz = "5.0001" />
     </inertial>
     <!--<collision>
@@ -29,7 +29,7 @@ IMPORTANT NOTE: THE INERTIAL PROPERTIES ARE NOT CORRECT (PARTICULARLY THE ORIGIN
     </collision>-->
     <collision>
       <geometry>
-        <mesh filename="chest_2.stl" scale="1 1 1"/>
+        <mesh filename="chest_2xfront.stl" scale="1 1 1"/>
       </geometry>
       <origin rpy="0 0 0" xyz="0 0 0"/>
     </collision>
@@ -49,7 +49,7 @@ IMPORTANT NOTE: THE INERTIAL PROPERTIES ARE NOT CORRECT (PARTICULARLY THE ORIGIN
   <link name="belly">
     <inertial>
       <origin rpy = "0 0 0" xyz = "0 -0.0525 0" />
-      <mass value = "9.452" />
+      <mass value = "4.726" />
       <inertia ixx = "5.0001" ixy = "0" ixz = "0" iyy = "1.0001" iyz = "0" izz = "5.0001" />
     </inertial>
     <!--<collision>
@@ -60,7 +60,7 @@ IMPORTANT NOTE: THE INERTIAL PROPERTIES ARE NOT CORRECT (PARTICULARLY THE ORIGIN
     </collision>-->
     <collision>
       <geometry>
-        <mesh filename="belly_2.stl" scale="1 1 1"/>
+        <mesh filename="belly_2xfront.stl" scale="1 1 1"/>
       </geometry>
       <origin rpy="0 0 0" xyz="0 0 0"/>
     </collision>
@@ -76,7 +76,7 @@ IMPORTANT NOTE: THE INERTIAL PROPERTIES ARE NOT CORRECT (PARTICULARLY THE ORIGIN
   <link name="pelvis">
     <inertial>
       <origin rpy = "0 0 0" xyz = "0 -0.035 0" />
-      <mass value = "9.656" />
+      <mass value = "4.828" />
       <inertia ixx = "5.0001" ixy = "0" ixz = "0" iyy = "1.0001" iyz = "0" izz = "5.0001" />
     </inertial>
     <!--<collision>
@@ -87,7 +87,7 @@ IMPORTANT NOTE: THE INERTIAL PROPERTIES ARE NOT CORRECT (PARTICULARLY THE ORIGIN
     </collision>-->
     <collision>
       <geometry>
-        <mesh filename="pelvis.stl" scale="1 1 1"/>
+        <mesh filename="pelvisxfront.stl" scale="1 1 1"/>
       </geometry>
       <origin rpy="0 0 0" xyz="0 0 0"/>
     </collision>
@@ -534,7 +534,7 @@ IMPORTANT NOTE: THE INERTIAL PROPERTIES ARE NOT CORRECT (PARTICULARLY THE ORIGIN
   <link name="neck">
     <inertial>
       <origin rpy = "0 0 0" xyz = "0 0.02625 0" />
-      <mass value = "1.50218" />
+      <mass value = "0.75109" />
       <inertia ixx = "5.0001" ixy = "0" ixz = "0" iyy = "1.0001" iyz = "0" izz = "5.0001" />
     </inertial>
     <!--<collision>
@@ -545,7 +545,7 @@ IMPORTANT NOTE: THE INERTIAL PROPERTIES ARE NOT CORRECT (PARTICULARLY THE ORIGIN
     </collision>-->
     <collision>
       <geometry>
-        <mesh filename="neck.stl" scale="1 1 1"/>
+        <mesh filename="neckxfront.stl" scale="1 1 1"/>
       </geometry>
       <origin rpy="0 0 0" xyz="0 0 0"/>
     </collision>
@@ -561,7 +561,7 @@ IMPORTANT NOTE: THE INERTIAL PROPERTIES ARE NOT CORRECT (PARTICULARLY THE ORIGIN
   <link name="head">
     <inertial>
       <origin rpy = "0 0 0" xyz = "0 0.11375 0" />
-      <mass value = "4.005818" />
+      <mass value = "1.3352726666666666" />
       <inertia ixx = "5.0001" ixy = "0" ixz = "0" iyy = "1.0001" iyz = "0" izz = "5.0001" />
     </inertial>
     <!--<collision>
@@ -572,7 +572,7 @@ IMPORTANT NOTE: THE INERTIAL PROPERTIES ARE NOT CORRECT (PARTICULARLY THE ORIGIN
     </collision>-->
     <collision>
       <geometry>
-        <mesh filename="head_3.stl" scale="1 1 1"/>
+        <mesh filename="head_3xfront.stl" scale="1 1 1"/>
       </geometry>
       <origin rpy="0 0 0" xyz="0 0 0"/>
     </collision>
@@ -1024,4 +1024,105 @@ IMPORTANT NOTE: THE INERTIAL PROPERTIES ARE NOT CORRECT (PARTICULARLY THE ORIGIN
     <origin xyz="0 0 0"/>
   </joint>
 -->
+
+  <link name="chest_back">
+    <inertial>
+      <origin rpy = "0 0 0" xyz = "0 0.18375 0" />
+      <mass value = "7.344" />
+      <inertia ixx = "5.0001" ixy = "0" ixz = "0" iyy = "1.0001" iyz = "0" izz = "5.0001" />
+    </inertial>
+    <collision>
+      <geometry>
+        <mesh filename="chest_2xback.stl" scale="1 1 1"/>
+      </geometry>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+    </collision>
+  </link>
+
+  <joint name="chest_to_chest_back" type="fixed">
+    <parent link="chest"/>
+    <child link="chest_back"/>
+    <origin xyz="0 0 0"/>
+  </joint>
+
+  <link name="belly_back">
+    <inertial>
+      <origin rpy = "0 0 0" xyz = "0 0.18375 0" />
+      <mass value = "4.726" />
+      <inertia ixx = "5.0001" ixy = "0" ixz = "0" iyy = "1.0001" iyz = "0" izz = "5.0001" />
+    </inertial>
+    <collision>
+      <geometry>
+        <mesh filename="belly_2xback.stl" scale="1 1 1"/>
+      </geometry>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+    </collision>
+  </link>
+
+  <joint name="belly_to_belly_back" type="fixed">
+    <parent link="belly"/>
+    <child link="belly_back"/>
+    <origin xyz="0 0 0"/>
+  </joint>
+
+  <link name="pelvis_back">
+    <inertial>
+      <origin rpy = "0 0 0" xyz = "0 0.18375 0" />
+      <mass value = "4.828" />
+      <inertia ixx = "5.0001" ixy = "0" ixz = "0" iyy = "1.0001" iyz = "0" izz = "5.0001" />
+    </inertial>
+    <collision>
+      <geometry>
+        <mesh filename="pelvisxback.stl" scale="1 1 1"/>
+      </geometry>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+    </collision>
+  </link>
+
+  <joint name="pelvis_to_pelvis_back" type="fixed">
+    <parent link="pelvis"/>
+    <child link="pelvis_back"/>
+    <origin xyz="0 0 0"/>
+  </joint>
+
+  <link name="neck_back">
+    <inertial>
+      <origin rpy = "0 0 0" xyz = "0 0.18375 0" />
+      <mass value = "0.75109" />
+      <inertia ixx = "5.0001" ixy = "0" ixz = "0" iyy = "1.0001" iyz = "0" izz = "5.0001" />
+    </inertial>
+    <collision>
+      <geometry>
+        <mesh filename="neckxback.stl" scale="1 1 1"/>
+      </geometry>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+    </collision>
+  </link>
+
+  <joint name="neck_to_neck_back" type="fixed">
+    <parent link="neck"/>
+    <child link="neck_back"/>
+    <origin xyz="0 0 0"/>
+  </joint>
+
+  <link name="head_back">
+    <inertial>
+      <origin rpy = "0 0 0" xyz = "0 0.18375 0" />
+      <mass value = "2.670545333333333" />
+      <inertia ixx = "5.0001" ixy = "0" ixz = "0" iyy = "1.0001" iyz = "0" izz = "5.0001" />
+    </inertial>
+    <collision>
+      <geometry>
+        <mesh filename="head_3xback.stl" scale="1 1 1"/>
+      </geometry>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+    </collision>
+  </link>
+
+  <joint name="head_to_head_back" type="fixed">
+    <parent link="head"/>
+    <child link="head_back"/>
+    <origin xyz="0 0 0"/>
+  </joint>
+
 </robot>

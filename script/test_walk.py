@@ -4,7 +4,7 @@ import time
 
 physicsClient = p.connect(p.GUI)
 
-m1 = Man(physicsClient)
+m1 = Man(physicsClient, partitioned = True)
 m2 = Man(physicsClient)
 
 for j in range(15):
