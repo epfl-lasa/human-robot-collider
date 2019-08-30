@@ -8,7 +8,8 @@ import os
 
 class Man:
 	def __init__(self, pybtPhysicsClient):
-		self.body_id = p.loadURDF("../data/human_adult_scan.urdf",
+		self.body_id = p.loadURDF(#"man.urdf"
+			os.path.join(os.path.dirname(__file__), "man.urdf"),
 			flags=p.URDF_MAINTAIN_LINK_ORDER,
 			physicsClientId = pybtPhysicsClient)
 
@@ -36,6 +37,7 @@ class Man:
 		self.cycle_time_steps = np.load(
 			os.path.join(os.path.dirname(__file__), "cycle_time_steps.npy"))
 
+		self.gait_phase_step = 0 #just to declare it explicitly
 		self.setGaitPhase(0)
 
 	def greet(self):
