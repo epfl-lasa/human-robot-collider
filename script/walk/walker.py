@@ -53,7 +53,7 @@ class Man:
 				urdf_load_flags = p.URDF_MAINTAIN_LINK_ORDER | p.URDF_USE_SELF_COLLISION
 			self.body_id = p.loadURDF(#"man.urdf"
 				os.path.join(os.path.dirname(__file__), "man.urdf"),
-				flags=urdf_load_flags,
+				flags=urdf_load_flags, #useFixedBase=1, FOR TEST_GRAVITY_COMPENSATION
 				physicsClientId = pybtPhysicsClient)
 
 		# pose containers
@@ -67,15 +67,16 @@ class Man:
 		self.joint_positions = np.zeros([44])
 
 		# gait motion data
+		translation_scaling = 0.95
 		self.cyclic_joint_positions = np.load(
 			os.path.join(os.path.dirname(__file__), "cyclic_joint_positions.npy"))
 		self.cyclic_pelvis_rotations = np.load(
 			os.path.join(os.path.dirname(__file__), "cyclic_pelvis_rotations.npy"))
-		self.cyclic_pelvis_forward_velocity = np.load(
+		self.cyclic_pelvis_forward_velocity = translation_scaling*np.load(
 			os.path.join(os.path.dirname(__file__), "cyclic_pelvis_forward_velocity.npy"))
-		self.cyclic_pelvis_lateral_position = np.load(
+		self.cyclic_pelvis_lateral_position = translation_scaling*np.load(
 			os.path.join(os.path.dirname(__file__), "cyclic_pelvis_lateral_position.npy"))
-		self.cyclic_pelvis_vertical_position = np.load(
+		self.cyclic_pelvis_vertical_position = translation_scaling*np.load(
 			os.path.join(os.path.dirname(__file__), "cyclic_pelvis_vertical_position.npy"))
 		self.cycle_time_steps = np.load(
 			os.path.join(os.path.dirname(__file__), "cycle_time_steps.npy"))
@@ -85,6 +86,44 @@ class Man:
 
 	def greet(self):
 		print("Hello")
+
+	def setColorForPartitionedCase4(self):
+		# arm_indices, foot_indices ... = ...
+		cl =[
+			[116, 66, 200], # purple heart
+			[252,116,253], # pink flamingo
+			[242,40,71], # scarlet
+			[255,127,0], # orange
+			[253, 252,116], # unmellow yellow
+			[190, 192,10], # mellow green (unused)
+			[29,249,20], # electric lime
+			[120,219,226], # aquamarine
+			[59,176,143], # jungle green
+			[221,148,117], # copper
+			[0, 0, 0], # black
+			[0.9*255, 0.9*255, 0.9*255],# grey white
+			[0,0,255]] # blue
+		link_color_index_map = [
+			0,0,0, # chest belly pelvis (front)
+			12,12, # upper legs
+			7,7, # shins
+			6,6, # ankles/feet
+			1,1, # upper arms
+			1,1, # forearms
+			1,1, # hands
+			10, # neck (front)
+			4, # head (front/face)
+			6,6, # soles/feet
+			6,6, # toes/feet
+			0,0,0, # chest belly pelvis (back)
+			9, # neck (back)
+			11 # head (back/skull)
+			]
+		sdl = p.getVisualShapeData(self.body_id)
+		for i in range(len(sdl)):
+			j = link_color_index_map[i]
+			p.changeVisualShape(self.body_id, sdl[i][1], 
+				rgbaColor=[cl[j][0]/255, cl[j][1]/255, cl[j][2]/255, 1])
 
 	def resetToReference(self):
 		pass
@@ -234,7 +273,7 @@ class Man:
 		p.resetJointState(self.body_id, 18, -self.joint_positions[42])
 		# left sole to left toes
 		p.resetJointState(self.body_id, 19, -self.joint_positions[26])
-
+		#return FOR TEST_GRAVITY_COMPENSATION
 		# Base rotation and Zero Translation (for now)
 		self.__applyMMMRotationAndZeroTranslationToURDFBody(
 			self.other_rpy[0],
