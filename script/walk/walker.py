@@ -40,6 +40,21 @@ import os
 # 		self.cyclic_joint_velocities = central_differences(self.cyclic_joint_positions)/0.02
 # 		= central_differences(self.cyclic_joint_positions)/0.02
 
+def quaternion_multiplication(q1_, q2_):
+	q1 = [q1_[3],q1_[0],q1_[1],q1_[2]]
+	q2 = [q2_[3],q2_[0],q2_[1],q2_[2]]
+	q1_times_q2 = np.array([
+		q1[0]*q2[0] - q1[1]*q2[1] - q1[2]*q2[2] - q1[3]*q2[3],
+		q1[0]*q2[1] + q1[1]*q2[0] + q1[2]*q2[3] - q1[3]*q2[2],
+		q1[0]*q2[2] - q1[1]*q2[3] + q1[2]*q2[0] + q1[3]*q2[1],
+		q1[0]*q2[3] + q1[1]*q2[2] - q1[2]*q2[1] + q1[3]*q2[0]])
+	return np.roll(q1_times_q2, -1)
+
+def quaternion_and_its_derivative_to_angular_velocity(quaternion, derivative):
+	dummy, inverse_quaternion = p.invertTransform([0,0,0], quaternion)
+	omega4vec = quaternion_multiplication(2*derivative, inverse_quaternion)
+	return np.array([omega4vec[0], omega4vec[1], omega4vec[2]])
+
 class Man:
 	def __init__(self, pybtPhysicsClient, partitioned = False, self_collisions = False):
 		if partitioned:
@@ -182,6 +197,57 @@ class Man:
 		self.joint_positions[:] = self.cyclic_joint_positions[:, self.gait_phase_step]
 
 		self.__apply_pose()
+
+	def set_body_velocities_from_gait(self):
+		self.advance()
+
+		pos_2, ori_2 = p.getBasePositionAndOrientation(self.body_id)
+		joint_position_list_2 = self.__get_joint_positions_as_list()
+
+		self.regress()
+		self.regress()
+
+		pos_1, ori_1 = p.getBasePositionAndOrientation(self.body_id)
+		joint_position_list_1 = self.__get_joint_positions_as_list()
+
+		self.advance()
+
+		# compute base velocities via central differences assuming a timestep of 0.01 [s]
+		baseLinearVelocity = (np.array(pos_2) - np.array(pos_1))/0.02
+		quaternion_derivative = (np.array(ori_2) - np.array(ori_1))/0.02
+
+		dummy, ori_now = p.getBasePositionAndOrientation(self.body_id)
+		dummy, inverse_ori_now = p.invertTransform([0,0,0], ori_now)
+		omega4vec = quaternion_multiplication(2*quaternion_derivative, inverse_ori_now)
+		baseAngularVelocity = [omega4vec[0], omega4vec[1], omega4vec[2]] 
+
+		p.resetBaseVelocity(self.body_id,
+			linearVelocity = baseLinearVelocity, angularVelocity = baseAngularVelocity)
+
+		# compute joint velocities via central differences assuming a timestep of 0.01 [s]
+		joint_position_list_now = self.__get_joint_positions_as_list()
+		for i in range(len(joint_position_list_now)):
+			joint_info = p.getJointInfo(self.body_id, i)
+			if joint_info[2] == p.JOINT_SPHERICAL:
+				omega = quaternion_and_its_derivative_to_angular_velocity(joint_position_list_now[i],
+					(np.array(joint_position_list_2[i]) - np.array(joint_position_list_1[i]))/0.02)
+				p.resetJointStateMultiDof(self.body_id, i,
+					targetValue = joint_position_list_now[i], targetVelocity = omega)
+			elif joint_info[2] == p.JOINT_REVOLUTE:
+				omega_scalar = (joint_position_list_2[i] - joint_position_list_1[i])/0.02
+				p.resetJointState(self.body_id, i,
+					targetValue = joint_position_list_now[i], targetVelocity = omega_scalar)
+
+	def __get_joint_positions_as_list(self):
+		joint_position_list = []
+		for i in range(p.getNumJoints(self.body_id)):
+			joint_info = p.getJointInfo(self.body_id, i)
+			if joint_info[2] == p.JOINT_SPHERICAL:
+				joint_state = p.getJointStateMultiDof(self.body_id, i)
+			elif joint_info[2] == p.JOINT_REVOLUTE:
+				joint_state = p.getJointState(self.body_id, i)
+			joint_position_list.append(joint_state[0])
+		return joint_position_list
 
 	def __apply_pose(self):
 		# chest to belly
