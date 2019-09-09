@@ -360,6 +360,29 @@ def extract_impulse_in_global_coordinates(contact_point_struct):
 		np.array(contact_point_struct[11])*contact_point_struct[10] +
 		np.array(contact_point_struct[13])*contact_point_struct[12])
 
+def get_all_link_velocities(body_id):
+	all_velocities = []
+	all_velocities.append(p.getBaseVelocity(body_id))
+	for i in range(p.getNumJoints(body_id)):
+		state_l = p.getLinkState(body_id, i, computeLinkVelocity=1)
+		all_velocities.append([state_l[6], state_l[7]])
+	return all_velocities
+
+def get_link_local_coordinates(body_id, link_index, point_global):
+	link_state = getLinkOrBaseState(body_id, link_index)
+	point_local = rotate_by_inverse_of_quaternion(np.array(point_global)-np.array(link_state[4]), 
+											link_state[5])
+	return point_local
+
+def get_pre_impact_velocity(body_id, all_link_velocities, link_index, contact_point):
+	link_state = getLinkOrBaseState(body_id, link_index)
+	link_position = np.array(link_state[4])
+	link_origin_velocity = np.array(all_link_velocities[link_index+1][0]) # +1 due to base
+	link_angular_velocity = np.array(all_link_velocities[link_index+1][1]) # +1 due to base
+	contact_point_vel = link_origin_velocity + np.cross(link_angular_velocity,
+		np.array(contact_point) - link_position)
+	return contact_point_vel
+
 def collide_case_5(result, iteration_number, robot_angle, human_angle, gait_phase,
 	robot_speed, t_max_to_collision, distance, walking_man, robot_body_id, show_GUI):
 	reset_walker_case_5(walking_man, distance, human_angle, gait_phase)
@@ -382,7 +405,7 @@ def collide_case_5(result, iteration_number, robot_angle, human_angle, gait_phas
 		if show_GUI:
 			time.sleep(0.01)
 	if time_out and collision_free:
-		return False
+		return (result, False)
 	# simulate the first 2 seconds of the collision
 	time_horizon = 2.0
 	walking_man.regress() 
@@ -390,18 +413,34 @@ def collide_case_5(result, iteration_number, robot_angle, human_angle, gait_phas
 	walking_man.set_body_velocities_from_gait()
 	set_robot_velocity_case_5(robot_body_id, robot_angle, robot_speed) # set velocities
 	for i in range(int(time_horizon*240.0)):
+		all_walker_link_velocities = get_all_link_velocities(walking_man.body_id)
+		all_robot_link_velocities = get_all_link_velocities(robot_body_id)
 		p.stepSimulation()
 		contact_points = p.getContactPoints(walking_man.body_id, robot_body_id)
 		for cp in contact_points:
 			impulse = extract_impulse_in_global_coordinates(cp)
+			point_A_link_local = get_link_local_coordinates(walking_man.body_id, cp[3], cp[5])
+			point_B_link_local = get_link_local_coordinates(robot_body_id, cp[4], cp[6])
+			pre_impact_velocity_point_A = get_pre_impact_velocity(walking_man.body_id,
+				all_walker_link_velocities, cp[3], cp[5])
+			pre_impact_velocity_point_B = get_pre_impact_velocity(robot_body_id,
+				all_robot_link_velocities, cp[4], cp[6])
 			result = np.append(result, np.array([[
-				iteration_number, cp[3], cp[4],
-				cp[5][0], cp[5][1], cp[5][2], cp[6][0], cp[6][1], cp[6][2],
+				iteration_number, cp[3], cp[4], # both link's indices
+				cp[5][0], cp[5][1], cp[5][2], cp[6][0], cp[6][1], cp[6][2], #contact points
 				impulse[0], impulse[1], impulse[2],
-				robot_angle, human_angle, gait_phase, robot_speed]]), 0)
+				cp[7][0], cp[7][1], cp[7][2], # normal direction B to A
+				point_A_link_local[0], point_A_link_local[1], point_A_link_local[2],
+				point_B_link_local[0], point_B_link_local[1], point_B_link_local[2],# link-local coordinates of contact points A and B, respectively
+				pre_impact_velocity_point_A[0], pre_impact_velocity_point_A[1], pre_impact_velocity_point_A[2],
+				pre_impact_velocity_point_B[0], pre_impact_velocity_point_B[1], pre_impact_velocity_point_B[2],# pre-impact velocities of contact points A and B, respectively
+				i/240.0, robot_angle, human_angle, gait_phase, robot_speed]]), 0)
+			#if show_GUI:
+			#	p.addUserDebugLine(cp[6], np.array(cp[6])+np.array(cp[7]))
+			#	time.sleep(1.0)
 		if show_GUI:
 			time.sleep(1/240.0)
-	return True
+	return (result, True)
 
 def disable_body_motors(body_id):
 	for j in range (p.getNumJoints(body_id)):
@@ -436,7 +475,7 @@ def case_both_moving_forward_impulse(robot_urdf_path,
 	miss_angle_upper_threshold = np.pi + miss_angle_tmp
 
 	# set up Bullet with the robot and the walking man
-	show_GUI = True
+	show_GUI = False
 	if not show_GUI:
 		physics_client_id = p.connect(p.DIRECT)
 	else:
@@ -464,8 +503,11 @@ def case_both_moving_forward_impulse(robot_urdf_path,
 	#p.setGravity(0,0,-9.81)
 
 	# initialize the container for the results of all the iterations
-	# [iteration_number, link_1_index, link_2_index, point1-x,-y,-z, point2-x,-y,-z, impulse-x,-y,-z, robot_angle, human_angle, initial_gait_phase, robot_speed]
-	result = np.zeros([0, 16])
+	# [iteration_number, link_1_index, link_2_index, point1-x,-y,-z, point2-x,-y,-z, impulse-x,-y,-z, 
+	# contact_normal_2_to_1-x,-y,-z, point1-local-x,-y,-z, point2-local-x,-y,-z,
+	# point1_pre_impact_velocity-x,-y,-z, point2_pre_impact_velocity-x,-y,-z,
+	# time_after_impact, robot_angle, human_angle, initial_gait_phase, robot_speed]
+	result = np.zeros([0, 32])
 
 	iteration_number = 0
 	number_of_collision_free_iterations = 0
@@ -484,7 +526,7 @@ def case_both_moving_forward_impulse(robot_urdf_path,
 					if (relative_speed > (distance -human_radius-robot_radius)/t_max_to_collision) and (
 						miss_angle_lower_threshold < angle_relative_v) and (
 						miss_angle_upper_threshold > angle_relative_v):
-						has_collision = collide_case_5(result, iteration_number,
+						result, has_collision = collide_case_5(result, iteration_number,
 							robot_angle, human_angle, gait_phase, robot_speed,
 							t_max_to_collision, distance, walking_man, robot_body_id, show_GUI)
 					else:
@@ -492,6 +534,7 @@ def case_both_moving_forward_impulse(robot_urdf_path,
 					if not has_collision:
 						number_of_collision_free_iterations += 1
 					iteration_number += 1
+					print(np.size(result,0))
 
 	print ("Number of collision-free iterations: ", number_of_collision_free_iterations)
 	return result
