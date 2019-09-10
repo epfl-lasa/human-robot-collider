@@ -129,8 +129,11 @@ print ("Number of skipped composite impacts (iterations): ", skip_count)
 f, (ax1, ax2) = plt.subplots(1, 2, sharey=True)
 ax1.hist(processed_result_per_iteration)
 ax1.set_title('Force Distribution from Impulse Simulation')
+ax1.set_xlabel('Force [N]')
+ax1.set_ylabel('Occurrence count')
 ax2.hist(reference_model_force_result_per_iteration)
-ax2.set_title('Force Distribution from Full Mass Simplification')
+ax2.set_title('Force Distribution from ISO Mass Simplification')
+ax2.set_xlabel('Force [N]')
 plt.show()
 
 
