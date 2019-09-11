@@ -1,10 +1,16 @@
 clear all 
 close all
 
+% 3 controller parameters
+actuator_force_max = 0; % set it to zero for no control
+actuator_force_rise_time = 0.001;
+actuator_delay = 0.000;
+
 phase_1_output = load('qolo_contact_points_case_4_with_velocities.mat');
 F_contact_peak_per_iteration = zeros(size(phase_1_output.result, 1), 1);
 for i = 1:size(phase_1_output.result, 1)
-    F_contact_peak = simulate_collision_condition_from_phase_1(phase_1_output.result(i,:));
+    F_contact_peak = simulate_collision_condition_from_phase_1(phase_1_output.result(i,:), ...
+        actuator_force_max, actuator_force_rise_time, actuator_delay);
     F_contact_peak_per_iteration(i) = F_contact_peak;
 end
 
@@ -64,10 +70,17 @@ title('Contact Force Magnitude')
 
 %% for calling the simulation from specific initial conditions corresponding to the outputs of phase 1
 
-function F_contact_peak = simulate_collision_condition_from_phase_1(phase_1_output_of_one_iteration)
+function F_contact_peak = simulate_collision_condition_from_phase_1(phase_1_output_of_one_iteration, ...
+    actuator_force_max, actuator_force_rise_time, actuator_delay)
 % phase_1_output_of_one_iteration:
 %   [iteration_number, link_1_index, link_2_index, point1-x,-y,-z, point2-x,-y,-z, velocity-point1-x,-y,-z,
 %    contact_normal_2_to_1-x,-y,-z, robot_speed, robot_angle, human_angle, initial_gait_phase]
+v_rel = [phase_1_output_of_one_iteration(10); phase_1_output_of_one_iteration(11)];
+cn_global = [phase_1_output_of_one_iteration(13); phase_1_output_of_one_iteration(14)];
+if v_rel'*cn_global > 0
+    F_contact_peak = 0;
+    return
+end
 
 robot_speed = phase_1_output_of_one_iteration(16);
 x_h_initial = phase_1_output_of_one_iteration(4);
@@ -97,9 +110,15 @@ z_init = [0,0, y_r_initial,-robot_speed, -pi/2,0, x_h_initial,v_h_initial(1), y_
 
 % integrate the ODE
 t_step = 0.001;
+options = odeset('Events', @(t,z) ODE_stopping_events_function(t,z, m_r, i_r, m_h, ...
+    x_initial_contact_point, y_initial_contact_point,...
+    x_contact_normal, y_contact_normal, spring_constant, D, L, ...
+    actuator_force_max, actuator_force_rise_time, actuator_delay));
 [T,Z] = ode45(@(t, z) ODE_rigid_body_and_point_on_a_plane(t, z, m_r, i_r, m_h, ...
     x_initial_contact_point, y_initial_contact_point,...
-    x_contact_normal, y_contact_normal, spring_constant, D, L), 0:t_step:0.5, z_init');
+    x_contact_normal, y_contact_normal, spring_constant, D, L, ...
+    actuator_force_max, actuator_force_rise_time, actuator_delay), ...
+    0:t_step:0.5, z_init', options);
 
 % get force peak
 F_contact_peak = 0;
@@ -115,6 +134,9 @@ for i = 1:length(T)
 end
 
 % animate (optional)
+% if F_contact_peak < 3000
+%     return
+% end
 return
 slow_motion_factor = 10;
 clf
@@ -162,11 +184,38 @@ function m = reference_mass_by_link_indices(human_link_idx)
 	m = human_link_mass_map(floor(human_link_idx) + 1 + 1); % #+1 for base +1 for matlab
 end
 
+function [value, isterminal, direction] = ODE_stopping_events_function(t, z, m_r, i_r, m_h, ...
+    x_initial_contact_point, y_initial_contact_point,...
+    x_contact_normal, y_contact_normal, spring_constant, D, L, ...
+    actuator_force_max, actuator_force_rise_time, actuator_delay)
+value = zeros(2,1);
+direction = zeros(2,1);
+isterminal = zeros(2,1);
+
+% contact force and point where it acts on the robot
+[Fx_contact_on_robot, Fy_contact_on_robot, x_contact_point_on_robot, ...
+    y_contact_point_on_robot] = compute_contact( ...
+        t, z, x_initial_contact_point, y_initial_contact_point, ...
+        x_contact_normal, y_contact_normal, spring_constant);
+value(1) = Fx_contact_on_robot^2 + Fy_contact_on_robot^2;
+direction(1) = -1;
+isterminal(1) = 1;
+
+R = sqrt((x_contact_point_on_robot - z(7))^2 + ...
+    (y_contact_point_on_robot - z(9))^2);
+is_distant = R > 0.2;
+is_free = Fx_contact_on_robot^2 + Fy_contact_on_robot^2 == 0;
+value(2) = double(is_free && is_distant);
+direction(2) = 0;
+isterminal(2) = 1;
+end
+
 %% for the coupled simulation
 
 function rhs = ODE_rigid_body_and_point_on_a_plane(t, z, m_r, i_r, m_h, ...
     x_initial_contact_point, y_initial_contact_point,...
-    x_contact_normal, y_contact_normal, spring_constant, D, L)
+    x_contact_normal, y_contact_normal, spring_constant, D, L, ...
+    actuator_force_max, actuator_force_rise_time, actuator_delay)
 %     t     time
 % positions:
     % z(1)	robot position in x (com position)
@@ -203,7 +252,8 @@ rhs(9) = z(10);
 % velocity derivatives = forces or moments divided by inertial terms
 [Fx_r, Fy_r, Mz_r, Fx_h, Fy_h] = get_external_forces_and_moments(t, z, m_r, i_r, ... % pass inertial terms to solve for the constrainig force
     x_initial_contact_point, y_initial_contact_point,...
-    x_contact_normal, y_contact_normal, spring_constant, D, L);
+    x_contact_normal, y_contact_normal, spring_constant, D, L, ...
+    actuator_force_max, actuator_force_rise_time, actuator_delay);
 rhs(2) = Fx_r/m_r;
 rhs(4) = Fy_r/m_r;
 rhs(6) = Mz_r/i_r;
@@ -212,7 +262,8 @@ rhs(10) = Fy_h/m_h;
 end
 
 function [Fx_r, Fy_r, Mz_r, Fx_h, Fy_h] = get_external_forces_and_moments(t, z, m_r, i_r, ...
-    x_initial_contact_point, y_initial_contact_point, x_contact_normal, y_contact_normal, spring_constant, D, L)
+    x_initial_contact_point, y_initial_contact_point, x_contact_normal, y_contact_normal, spring_constant, D, L, ...
+    actuator_force_max, actuator_force_rise_time, actuator_delay)
 % contact force and point where it acts on the robot
 [Fx_contact_on_robot, Fy_contact_on_robot, x_contact_point_on_robot, ...
     y_contact_point_on_robot] = compute_contact( ...
@@ -225,7 +276,9 @@ Fy_h = -Fy_contact_on_robot;
  
 % compute resultants of forces acting on the robot
 [Fx_r, Fy_r, Mz_r] = get_external_forces_and_moments_robot(t,z,Fx_contact_on_robot,...
-    Fy_contact_on_robot, x_contact_point_on_robot, y_contact_point_on_robot, m_r, i_r, D, L);
+    Fy_contact_on_robot, x_contact_point_on_robot, y_contact_point_on_robot, m_r, i_r, D, L, ...
+    actuator_force_max, actuator_force_rise_time, actuator_delay, x_initial_contact_point, y_initial_contact_point, ...
+        x_contact_normal, y_contact_normal);
 end
 
 function [Fx_contact_on_robot, Fy_contact_on_robot, x_contact_point_on_robot, ...
@@ -258,13 +311,16 @@ y_contact_point_on_robot = attraction_point(2);
 end
 
 function [Fx_r, Fy_r, Mz_r] = get_external_forces_and_moments_robot(t,z,Fx_contact_on_robot,...
-    Fy_contact_on_robot, x_contact_point_on_robot, y_contact_point_on_robot, m_r, i_r, D, L)
+    Fy_contact_on_robot, x_contact_point_on_robot, y_contact_point_on_robot, m_r, i_r, D, L, ...
+    actuator_force_max, actuator_force_rise_time, actuator_delay, x_initial_contact_point, y_initial_contact_point, ...
+        x_contact_normal, y_contact_normal)
 x_r = z(1);
 y_r = z(3);
 phi_r = z(5);
 
 % actuator forces
-[Frw, Flw] = get_wheel_forces(t, z);
+[Frw, Flw] = get_wheel_forces(t, z, actuator_force_max, actuator_force_rise_time, actuator_delay, ...
+    x_initial_contact_point, y_initial_contact_point, x_contact_normal, y_contact_normal);
 % constraining force due to differential drive kinematics
 Fconstraint = get_laterally_constraining_force(t,z, Frw, Flw, Fx_contact_on_robot,...
     Fy_contact_on_robot, x_contact_point_on_robot, y_contact_point_on_robot, L, D, m_r, i_r);
@@ -295,9 +351,58 @@ Fconstraint = 1/(1/m_r + D^2/i_r)*(L*D/2/i_r*(-Frw+Flw) + ...
     vx_r*omega_r*cos(phi_r) + vy_r*omega_r*sin(phi_r));
 end
 
-function [Frw, Flw] = get_wheel_forces(t, z)
-Frw = 0;
-Flw = 0;
+function [Frw, Flw] = get_wheel_forces(t, z, actuator_force_max, ...
+    actuator_force_rise_time, actuator_delay, x_initial_contact_point, y_initial_contact_point, ...
+        x_contact_normal, y_contact_normal)
+% use equal braking on both wheels (restriction for now)
+t_after_delay = max([0,t-actuator_delay]);
+braking_force = min([t_after_delay/actuator_force_rise_time, 1])*actuator_force_max;
+
+% apply full force forward or backward dependent on the contact normal
+if x_contact_normal < 0 % backward
+    Frw = -braking_force;
+    Flw = -braking_force;
+else % forward
+    Frw = braking_force;
+    Flw = braking_force;
+end
+
+return
+% apply some rotation control
+if abs(z(5) + pi/2) > pi/20
+    rotation_control = max([min([ -1000*(abs(z(5) + pi/2)-pi/20), ...
+        actuator_force_max]), -actuator_force_max]);
+    if z(5) + pi/2 < -pi/10
+        rotation_control = -rotation_control;      
+    end
+    if Frw > 0
+        if rotation_control > 0
+            Flw = Flw - 2*rotation_control;
+        else
+            Frw = Frw + 2*rotation_control;
+        end
+    else
+        if rotation_control > 0
+            Frw = Frw + 2*rotation_control;
+        else
+            Flw = Flw - 2*rotation_control;
+        end
+    end
+end
+
+return
+% transition to damping out the robot's velocity (halting)
+f_damping = max([min([ -0.5*100*[cos(z(5)) sin(z(5))]*[z(2); z(4)], ...
+    actuator_force_max]), -actuator_force_max]);
+
+%f_damping = 0; % zero force instead of damping
+
+t_transition = 0.1;
+if t_after_delay > t_transition
+    weight = min([1, (t_after_delay-t_transition)/actuator_force_rise_time]);
+    Frw = Frw*(1-weight) + weight*f_damping;
+    Flw = Flw*(1-weight) + weight*f_damping;
+end
 end
 
 %% for the visualization
