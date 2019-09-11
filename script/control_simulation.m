@@ -1,7 +1,23 @@
-disp("Script for plotting the controlled dynamic response of Qolo to a collision.")
-
 clear all 
 close all
+
+phase_1_output = load('qolo_contact_points_case_4_with_velocities.mat');
+F_contact_peak_per_iteration = zeros(size(phase_1_output.result, 1), 1);
+for i = 1:size(phase_1_output.result, 1)
+    F_contact_peak = simulate_collision_condition_from_phase_1(phase_1_output.result(i,:));
+    F_contact_peak_per_iteration(i) = F_contact_peak;
+end
+
+F_contact_peak_per_iteration(F_contact_peak_per_iteration == 0) = []; % remove near misses
+
+hist(F_contact_peak_per_iteration)
+xlabel('Contact Force Peak [N]')
+ylabel('Occurrence Count')
+title('Distribution of the Contact Force Peak from Vehicle Simulation')
+
+return
+
+disp("Script for plotting the controlled dynamic response of Qolo to a collision.")
 
 % initial state (explanation below in the ODE function)
 z_init = [0,0, 0,0, pi/4,0, 0.3,-0.3, 0.3,-0.3];
@@ -18,11 +34,13 @@ spring_constant = 40000;
 L = 0.4;
 D = 0.2;
 
+tic
 % integrate the ODE
 t_step = 0.001;
 [T,Z] = ode45(@(t, z) ODE_rigid_body_and_point_on_a_plane(t, z, m_r, i_r, m_h, ...
     x_initial_contact_point, y_initial_contact_point,...
     x_contact_normal, y_contact_normal, spring_constant, D, L), 0:t_step:1, z_init');
+toc
 
 % animate the result
 slow_motion_factor = 10;
@@ -43,6 +61,106 @@ plot(T, Fc_mag)
 xlabel('Time [s]')
 ylabel('Force [N]')
 title('Contact Force Magnitude')
+
+%% for calling the simulation from specific initial conditions corresponding to the outputs of phase 1
+
+function F_contact_peak = simulate_collision_condition_from_phase_1(phase_1_output_of_one_iteration)
+% phase_1_output_of_one_iteration:
+%   [iteration_number, link_1_index, link_2_index, point1-x,-y,-z, point2-x,-y,-z, velocity-point1-x,-y,-z,
+%    contact_normal_2_to_1-x,-y,-z, robot_speed, robot_angle, human_angle, initial_gait_phase]
+
+robot_speed = phase_1_output_of_one_iteration(16);
+x_h_initial = phase_1_output_of_one_iteration(4);
+y_h_initial = phase_1_output_of_one_iteration(5);
+v_h_initial = [0; -robot_speed] + [phase_1_output_of_one_iteration(10); ...
+    phase_1_output_of_one_iteration(11)];
+
+% constants (explanation below in the ODE function)
+m_r	= 100; % to be set according to Qolo data
+i_r	= m_r/2*0.3^2; % to be set according to Qolo data
+L = 0.4; % to be set according to Qolo data
+D = 0.2; % to be set according to Qolo data
+
+qolo_model_axle_default_y = 0.254475;
+y_r_initial = D-qolo_model_axle_default_y;
+
+% parameters (explanation below in the ODE function)
+x_initial_contact_point = -y_h_initial + y_r_initial; % rotated by pi/2 and shifted
+y_initial_contact_point = x_h_initial; % rotated by pi/2
+x_contact_normal = phase_1_output_of_one_iteration(14); % rotated by pi/2
+y_contact_normal = -phase_1_output_of_one_iteration(13); % rotated by pi/2
+spring_constant = get_spring_constant_by_link_indices(phase_1_output_of_one_iteration(2), 0);
+m_h	= reference_mass_by_link_indices(phase_1_output_of_one_iteration(2));
+
+% initial state (explanation below in the ODE function)
+z_init = [0,0, y_r_initial,-robot_speed, -pi/2,0, x_h_initial,v_h_initial(1), y_h_initial,v_h_initial(2)];
+
+% integrate the ODE
+t_step = 0.001;
+[T,Z] = ode45(@(t, z) ODE_rigid_body_and_point_on_a_plane(t, z, m_r, i_r, m_h, ...
+    x_initial_contact_point, y_initial_contact_point,...
+    x_contact_normal, y_contact_normal, spring_constant, D, L), 0:t_step:0.5, z_init');
+
+% get force peak
+F_contact_peak = 0;
+for i = 1:length(T)
+    [Fx_contact_on_robot, Fy_contact_on_robot, x_contact_point_on_robot, ...
+        y_contact_point_on_robot] = compute_contact( ...
+            T(i), Z(i,:)', x_initial_contact_point, y_initial_contact_point, ...
+            x_contact_normal, y_contact_normal, spring_constant);
+    Fc_mag = sqrt(Fx_contact_on_robot^2 + Fy_contact_on_robot^2);
+    if Fc_mag > F_contact_peak
+        F_contact_peak = Fc_mag;
+    end
+end
+
+% animate (optional)
+return
+slow_motion_factor = 10;
+clf
+animate_trajectory(t_step, slow_motion_factor,Z, x_initial_contact_point, y_initial_contact_point,...
+    x_contact_normal, y_contact_normal, L, D)
+end
+
+function k = get_spring_constant_by_link_indices(human_link_idx, qolo_link_idx)
+	human_link_spring_constant_map = [...
+		35000.0,35000.0,35000.0, ... # chest belly pelvis (front)
+		50000.0,50000.0, ...# upper legs
+		60000.0,60000.0, ...# shins
+		75000.0,75000.0, ...# ankles/feet
+		75000.0,75000.0, ...# upper arms
+		75000.0,75000.0, ...# forearms
+		75000.0,75000.0, ...# hands
+		50000.0, ...# neck (front)
+		75000.0, ...# head (front/face)
+		75000.0,75000.0, ...# soles/feet
+		75000.0,75000.0, ...# toes/feet
+		35000.0,35000.0,35000.0, ...# chest belly pelvis (back)
+		50000.0, ...# neck (back)
+		150000.0 ...# head (back/skull)
+		];
+    k = human_link_spring_constant_map(floor(human_link_idx) + 1 + 1); % +1 for base +1 for matlab
+end
+
+function m = reference_mass_by_link_indices(human_link_idx)
+	human_link_mass_map = [ ...
+		40.0,40.0,40.0, ... # chest belly pelvis (front)
+		15.0,15.0, ... # upper legs
+		5.0,5.0, ... # shins
+		1.0,1.0, ... # ankles/feet
+		3.0,3.0, ... # upper arms
+		2.0,2.0, ... # forearms
+		0.6,0.6, ... # hands
+		1.2, ... # neck (front)
+		4.4, ... # head (front/face)
+		1.0,1.0, ... # soles/feet
+		1.0,1.0, ... # toes/feet
+		40.0,40.0,40.0, ... # chest belly pelvis (back)
+		1.2, ... # neck (back)
+		4.4 ... # head (back/skull)
+		];
+	m = human_link_mass_map(floor(human_link_idx) + 1 + 1); % #+1 for base +1 for matlab
+end
 
 %% for the coupled simulation
 
