@@ -5,6 +5,12 @@ clear all
 actuator_force_max = 000; % set it to zero for no control
 actuator_force_rise_time = 0.001;
 actuator_delay = 0.000;
+k_shield = 10000;
+k_qolo = 10000;
+k_computer = 10000;
+k_wheel = 10000;
+k_hand = 75000;
+robot_spring_constants = [k_shield, k_qolo,k_computer, k_wheel, k_hand];
 
 phase_1_output = load('qolo_contact_points_case_4_with_velocities.mat');
 F_contact_peak_per_iteration = zeros(size(phase_1_output.result, 1), 1);
@@ -13,7 +19,7 @@ alignment_normal_axle_per_iteration = zeros(size(phase_1_output.result, 1), 1);
 F_threshold_per_iteration = zeros(size(phase_1_output.result, 1), 1);
 for i = 1:size(phase_1_output.result, 1)
     [F_contact_peak, F_ref, alignment_normal_axle, F_threshold] = simulate_collision_condition_from_phase_1(phase_1_output.result(i,:), ...
-        actuator_force_max, actuator_force_rise_time, actuator_delay);
+        actuator_force_max, actuator_force_rise_time, actuator_delay, robot_spring_constants);
     F_contact_peak_per_iteration(i) = F_contact_peak;
     F_ref_per_iteration(i) = F_ref;
     alignment_normal_axle_per_iteration(i) = alignment_normal_axle;

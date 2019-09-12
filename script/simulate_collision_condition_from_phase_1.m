@@ -1,5 +1,5 @@
 function [F_contact_peak, F_ref, alignment_normal_axle, F_threshold] = simulate_collision_condition_from_phase_1(phase_1_output_of_one_iteration, ...
-    actuator_force_max, actuator_force_rise_time, actuator_delay)
+    actuator_force_max, actuator_force_rise_time, actuator_delay, robot_spring_constants)
 % phase_1_output_of_one_iteration:
 %   [iteration_number, link_1_index, link_2_index, point1-x,-y,-z, point2-x,-y,-z, velocity-point1-x,-y,-z,
 %    contact_normal_2_to_1-x,-y,-z, robot_speed, robot_angle, human_angle, initial_gait_phase]
@@ -36,7 +36,8 @@ x_initial_contact_point = -y_h_initial + y_r_initial; % rotated by pi/2 and shif
 y_initial_contact_point = x_h_initial; % rotated by pi/2
 x_contact_normal = phase_1_output_of_one_iteration(14); % rotated by pi/2
 y_contact_normal = -phase_1_output_of_one_iteration(13); % rotated by pi/2
-spring_constant = get_spring_constant_by_link_indices(phase_1_output_of_one_iteration(2), 0);
+spring_constant = get_spring_constant_by_link_indices(phase_1_output_of_one_iteration(2), ...
+    phase_1_output_of_one_iteration(7:9), robot_spring_constants);
 m_h	= reference_mass_by_link_indices(phase_1_output_of_one_iteration(2));
 
 % initial state (explanation below in the ODE function)
@@ -90,7 +91,7 @@ animate_trajectory(t_step, slow_motion_factor,Z, x_initial_contact_point, y_init
     x_contact_normal, y_contact_normal, L, D)
 end
 
-function k = get_spring_constant_by_link_indices(human_link_idx, qolo_link_idx)
+function k = get_spring_constant_by_link_indices(human_link_idx, qolo_point, robot_spring_constants)
 	human_link_spring_constant_map = [...
 		35000.0,35000.0,35000.0, ... # chest belly pelvis (front)
 		50000.0,50000.0, ...# upper legs
@@ -107,7 +108,10 @@ function k = get_spring_constant_by_link_indices(human_link_idx, qolo_link_idx)
 		50000.0, ...# neck (back)
 		150000.0 ...# head (back/skull)
 		];
-    k = human_link_spring_constant_map(floor(human_link_idx) + 1 + 1); % +1 for base +1 for matlab
+    k_h = human_link_spring_constant_map(floor(human_link_idx) + 1 + 1); % +1 for base +1 for matlab
+    qolo_index = classify_qolo_point(qolo_point);
+    k_r = robot_spring_constants(qolo_index);
+    k = 1/(1/k_h + 1/k_r);
 end
 
 function m = reference_mass_by_link_indices(human_link_idx)
@@ -148,6 +152,59 @@ function ft = force_threshold_by_link_indices(human_link_idx)
 		130 ... # head (back/skull)
 		];
 	ft = force_threshold_map(floor(human_link_idx) + 1 + 1); % #+1 for base +1 for matlab
+end
+
+function index = classify_qolo_point(qolo_point)
+% decision tree
+
+if is_computer_box(qolo_point)
+    index = 3; % computer box (front or back)
+    return
+end
+if is_wheel(qolo_point)
+    index = 4; % wheel
+    return
+end
+if is_arm_or_hand(qolo_point)
+    index = 5; % arm or hand
+    return
+end
+
+if qolo_point(3) < 0.2606
+    index = 1; % protecive shield
+    return
+else
+    index = 2; % upper part of qolo
+    return
+end
+end
+
+function res = is_computer_box(qolo_point)
+res_front = in_bounding_box(qolo_point, [-0.1334, 0.136],[-0.425, -0.16],[0.254, 0.552]);
+res_back = in_bounding_box(qolo_point, [-0.154, 0.118],[0.1838, 0.457],[0.263, 0.5623]);
+res = res_front || res_back;
+end
+
+function res = is_wheel(qolo_point)
+res_right = in_bounding_box(qolo_point, [-0.3071, -0.2247],[-0.452, -0.08556],[0.2679, 0.4101]);
+res_left = in_bounding_box(qolo_point, [0.2247, 0.3071],[-0.452, -0.08556],[0.2679, 0.4101]);
+res = res_right || res_left;
+end
+
+function res = is_arm_or_hand(qolo_point)
+res_right = in_bounding_box(qolo_point, [-0.354,-0.2715],[-0.247,0.1211],[0.7507, 1.531]);
+res_left = in_bounding_box(qolo_point, [0.2715, 0.354],[-0.247,0.1211],[0.7507, 1.531]);
+res = res_right || res_left;
+end
+
+function res = in_bounding_box(qolo_point, box_limits_x, box_limits_y, box_limits_z)
+lims = [box_limits_x(1), box_limits_x(2); box_limits_y(1), box_limits_y(2); box_limits_z(1), box_limits_z(2)];
+res = true;
+for i = 1:3
+    if (lims(i,1) > qolo_point(i)) || (lims(i,2) < qolo_point(i))
+        res = false;
+    end
+end
 end
 
 function [value, isterminal, direction] = ODE_stopping_events_function(t, z, m_r, i_r, m_h, ...
