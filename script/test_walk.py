@@ -4,11 +4,12 @@ import time
 
 physicsClient = p.connect(p.GUI)
 
-m1 = Man(physicsClient, partitioned = True)
+m1_scaling = 1/1.68
+m1 = Man(physicsClient, partitioned = True, scaling = m1_scaling)
 m2 = Man(physicsClient)
 
 for j in range(15):
-	m1.resetGlobalTransformation([0,0,1],[0,0, -0.4*j])
+	m1.resetGlobalTransformation([0,0,1*m1_scaling],[0,0, -0.4*j])
 	m2.resetGlobalTransformation([-3.0 + 0.5*j,-2,1],[0,0, 0])
 	m2.setGaitPhase(0.4)
 	for i in range(400):

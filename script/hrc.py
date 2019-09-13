@@ -133,7 +133,7 @@ def reset_walker_case_4(walker, distance, robot_angle, human_angle, gait_phase):
 	x = distance*np.cos(-np.pi/2-robot_angle)
 	y = distance*np.sin(-np.pi/2-robot_angle)
 	orientation = -np.pi/2-robot_angle + human_angle
-	walker.resetGlobalTransformation([x,y,0.94],[0,0, orientation-np.pi/2])
+	walker.resetGlobalTransformation([x,y,0.94*walker.scaling],[0,0, orientation-np.pi/2])
 	walker.setGaitPhase(gait_phase)
 
 def advance_case_4(walker, robot_speed):
@@ -145,14 +145,14 @@ def regress_case_4(walker, robot_speed):
 	walker.regress()
 
 def case_both_moving_forward(robot_urdf_path, robot_angle_list, human_angle_list, gait_phase_list,
-	human_speed_factor_list, robot_speed_factor_list):
+	human_speed_factor_list, robot_speed_factor_list, walker_scaling):
 	# define constants for the setup
 	distance = 2.0
 	robot_radius = 0.6
-	human_radius = 0.6
-	t_max = 8.0
-	nominal_human_speed = 1.1124367713928223*0.95
+	human_radius = 0.6*walker_scaling
+	nominal_human_speed = 1.1124367713928223*0.95*walker_scaling
 	nominal_robot_speed = 1.0
+	t_max = 20.0/walker_scaling
 	miss_angle_tmp = np.arccos(np.sqrt(1 - (robot_radius+human_radius)*(robot_radius+human_radius)/distance/distance))
 	miss_angle_lower_threshold = np.pi - miss_angle_tmp
 	miss_angle_upper_threshold = np.pi + miss_angle_tmp
@@ -165,7 +165,7 @@ def case_both_moving_forward(robot_urdf_path, robot_angle_list, human_angle_list
 	else:
 		physics_client_id = p.connect(p.GUI)
 	robot_body_id = p.loadURDF(robot_urdf_path, useFixedBase = 1)
-	walking_man = Man(physics_client_id, partitioned = True)
+	walking_man = Man(physics_client_id, partitioned = True, scaling = walker_scaling)
 	
 	if show_GUI:
 		walking_man.setColorForPartitionedCase4()
@@ -188,8 +188,8 @@ def case_both_moving_forward(robot_urdf_path, robot_angle_list, human_angle_list
 			colBoxIds.append(box_id)
 
 	# initialize the container for the results of all the iterations
-	# [iteration_number, link_1_index, link_2_index, point1-x,-y,-z, point2-x,-y,-z, velocity-point1-x,-y,-z, contact_normal_2_to_1-x,-y,-z, robot_speed, robot_angle, human_angle, initial_gait_phase]
-	result = np.zeros([0, 19])
+	# [iteration_number, link_1_index, link_2_index, point1-x,-y,-z, point2-x,-y,-z, velocity-point1-x,-y,-z, contact_normal_2_to_1-x,-y,-z, robot_speed, robot_angle, human_angle, initial_gait_phase, walker_scaling]
+	result = np.zeros([0, 23])
 
 	iteration_number = 0
 	number_of_collision_free_iterations = 0
@@ -225,6 +225,7 @@ def case_both_moving_forward(robot_urdf_path, robot_angle_list, human_angle_list
 								for cp in contact_points:
 									if cp[8] <= 0.0:
 										collision_free = False
+										point_A_link_local = get_link_local_coordinates(walking_man.body_id, cp[3], cp[5])
 										# compute the velocity of the contact point on the human via finite differences
 										# 1) Get the point in link-local coordinates
 										link_state = getLinkOrBaseState(walking_man.body_id, cp[3])
@@ -268,7 +269,11 @@ def case_both_moving_forward(robot_urdf_path, robot_angle_list, human_angle_list
 											robot_speed,
 											robot_angle,
 											human_angle,
-											gait_phase]]), 0)
+											gait_phase,
+											walker_scaling,
+											point_A_link_local[0],
+											point_A_link_local[1],
+											point_A_link_local[2]]]), 0)
 								ti += 1
 								if ti > int(t_max/0.01):
 									time_out = True
@@ -590,7 +595,7 @@ if __name__ == '__main__':
 	elif args.case == '4':
 		if args.robot == 'qolo':
 			urdf_path = '../data/qolo_and_user_rotated.urdf'
-			result_name = 'qolo_contact_points_case_4_with_velocities'
+			result_name = 'qolo_contact_points_case_4_with_velocities_child'
 			robot_angle_list = list(np.linspace(0,np.pi*2,16,False))
 			human_angle_list = list(np.linspace(0,np.pi*2,16,False))
 			gait_phase_list = list(np.linspace(0, 1, 4, False))
@@ -604,12 +609,14 @@ if __name__ == '__main__':
 			gait_phase_list = [0]
 			human_speed_factor_list = [1]
 			robot_speed_factor_list = [1]
+		walker_scaling = 1/1.75
 		result = case_both_moving_forward(urdf_path,
 			robot_angle_list,
 			human_angle_list,
 			gait_phase_list,
 			human_speed_factor_list,
-			robot_speed_factor_list)
+			robot_speed_factor_list,
+			walker_scaling)
 	elif args.case == '5':
 		if args.robot == 'qolo':
 			urdf_path = '../data/man_on_qolo/man_x_partitioned_on_qolo_fixed.urdf'

@@ -56,12 +56,13 @@ def quaternion_and_its_derivative_to_angular_velocity(quaternion, derivative):
 	return np.array([omega4vec[0], omega4vec[1], omega4vec[2]])
 
 class Man:
-	def __init__(self, pybtPhysicsClient, partitioned = False, self_collisions = False):
+	def __init__(self, pybtPhysicsClient, partitioned = False, self_collisions = False, scaling=1.0):
 		if partitioned:
 			self.body_id = p.loadURDF(#"man.urdf"
 				os.path.join(os.path.dirname(__file__), "man_x_partitioned.urdf"),
 				flags=p.URDF_MAINTAIN_LINK_ORDER,
-				physicsClientId = pybtPhysicsClient)
+				physicsClientId = pybtPhysicsClient,
+				globalScaling = scaling)
 		else:
 			urdf_load_flags = p.URDF_MAINTAIN_LINK_ORDER
 			if self_collisions:
@@ -69,8 +70,11 @@ class Man:
 			self.body_id = p.loadURDF(#"man.urdf"
 				os.path.join(os.path.dirname(__file__), "man.urdf"),
 				flags=urdf_load_flags, #useFixedBase=1, FOR TEST_GRAVITY_COMPENSATION
-				physicsClientId = pybtPhysicsClient)
+				physicsClientId = pybtPhysicsClient,
+				globalScaling = scaling)
 
+
+		self.scaling = scaling;
 		# pose containers
 		self.global_xyz = np.zeros([3])
 		self.global_rpy = np.zeros([3])
@@ -82,16 +86,16 @@ class Man:
 		self.joint_positions = np.zeros([44])
 
 		# gait motion data
-		translation_scaling = 0.95
+		translation_scaling = 0.95 # this is a calibration/scaling of the mocap velocities
 		self.cyclic_joint_positions = np.load(
 			os.path.join(os.path.dirname(__file__), "cyclic_joint_positions.npy"))
 		self.cyclic_pelvis_rotations = np.load(
 			os.path.join(os.path.dirname(__file__), "cyclic_pelvis_rotations.npy"))
-		self.cyclic_pelvis_forward_velocity = translation_scaling*np.load(
+		self.cyclic_pelvis_forward_velocity = scaling*translation_scaling*np.load(
 			os.path.join(os.path.dirname(__file__), "cyclic_pelvis_forward_velocity.npy"))
-		self.cyclic_pelvis_lateral_position = translation_scaling*np.load(
+		self.cyclic_pelvis_lateral_position = scaling*translation_scaling*np.load(
 			os.path.join(os.path.dirname(__file__), "cyclic_pelvis_lateral_position.npy"))
-		self.cyclic_pelvis_vertical_position = translation_scaling*np.load(
+		self.cyclic_pelvis_vertical_position = scaling*translation_scaling*np.load(
 			os.path.join(os.path.dirname(__file__), "cyclic_pelvis_vertical_position.npy"))
 		self.cycle_time_steps = np.load(
 			os.path.join(os.path.dirname(__file__), "cycle_time_steps.npy"))
