@@ -145,7 +145,7 @@ def regress_case_4(walker, robot_speed):
 	walker.regress()
 
 def case_both_moving_forward(robot_urdf_path, robot_angle_list, human_angle_list, gait_phase_list,
-	human_speed_factor_list, robot_speed_factor_list, walker_scaling):
+	human_speed_factor_list, robot_speed_factor_list, walker_scaling, shuffle = False):
 	# define constants for the setup
 	distance = 2.0
 	robot_radius = 0.6
@@ -159,17 +159,30 @@ def case_both_moving_forward(robot_urdf_path, robot_angle_list, human_angle_list
 
 
 	# set up Bullet with the robot and the walking man
-	show_GUI = False
+	show_GUI = True
+	fast_forward = True
 	if not show_GUI:
 		physics_client_id = p.connect(p.DIRECT)
 	else:
 		physics_client_id = p.connect(p.GUI)
 	robot_body_id = p.loadURDF(robot_urdf_path, useFixedBase = 1)
+	shape_data = p.getVisualShapeData(robot_body_id)
+	p.changeVisualShape(robot_body_id, shape_data[0][1], 
+					rgbaColor=[0.4,0.4,0.4, 1])
 	walking_man = Man(physics_client_id, partitioned = True, scaling = walker_scaling)
 	
 	if show_GUI:
 		walking_man.setColorForPartitionedCase4()
 		p.configureDebugVisualizer(p.COV_ENABLE_GUI,0)
+		p.resetDebugVisualizerCamera(1.7,-30,-5,[0,0,0.8])
+
+	show_one_box = True
+	if show_one_box:
+		colBoxId = p.createCollisionShape(p.GEOM_BOX, halfExtents = [50,50,50])
+		box_id = p.createMultiBody(0, colBoxId, -1, [0, 0, -50], [0,0,0,1])
+		shape_data = p.getVisualShapeData(box_id)
+		p.changeVisualShape(box_id, shape_data[0][1], 
+					rgbaColor=[0.7,0.7,0.7, 1])
 
 	show_boxes = False
 	if (show_boxes and show_GUI):
@@ -188,12 +201,15 @@ def case_both_moving_forward(robot_urdf_path, robot_angle_list, human_angle_list
 			colBoxIds.append(box_id)
 
 	# initialize the container for the results of all the iterations
-	# [iteration_number, link_1_index, link_2_index, point1-x,-y,-z, point2-x,-y,-z, velocity-point1-x,-y,-z, contact_normal_2_to_1-x,-y,-z, robot_speed, robot_angle, human_angle, initial_gait_phase, walker_scaling]
+	# [iteration_number, link_1_index, link_2_index, point1-x,-y,-z, point2-x,-y,-z, velocity-point1-x,-y,-z, contact_normal_2_to_1-x,-y,-z, robot_speed, robot_angle, human_angle, initial_gait_phase, walker_scaling, point_A_link_local-x,-y,-z]
 	result = np.zeros([0, 23])
 
 	iteration_number = 0
 	number_of_collision_free_iterations = 0
 
+	if shuffle:
+		for para_list in [robot_angle_list, human_angle_list, gait_phase_list, human_speed_factor_list, robot_speed_factor_list]:
+			para_list[:] = list(np.random.permutation(para_list))
 	# let them collide
 	for robot_angle in robot_angle_list:
 		for human_angle in human_angle_list:
@@ -283,10 +299,12 @@ def case_both_moving_forward(robot_urdf_path, robot_angle_list, human_angle_list
 										pos, ori = p.getBasePositionAndOrientation(colBoxIds[i])
 										p.resetBasePositionAndOrientation(colBoxIds[i],
 											np.array(pos) + np.array([0,robot_speed*0.01,0]), ori)
-								if show_GUI:
+								if show_GUI and not fast_forward:
 									time.sleep(0.01)
 							if time_out and collision_free:
 								number_of_collision_free_iterations += 1
+							if show_GUI:
+								time.sleep(4)
 						else:
 							number_of_collision_free_iterations += 1
 						iteration_number += 1
@@ -595,7 +613,7 @@ if __name__ == '__main__':
 	elif args.case == '4':
 		if args.robot == 'qolo':
 			urdf_path = '../data/qolo_and_user_rotated.urdf'
-			result_name = 'qolo_contact_points_case_4_with_velocities_child'
+			result_name = 'qolo_contact_points_case_4_with_velocities_adult'
 			robot_angle_list = list(np.linspace(0,np.pi*2,16,False))
 			human_angle_list = list(np.linspace(0,np.pi*2,16,False))
 			gait_phase_list = list(np.linspace(0, 1, 4, False))
@@ -609,14 +627,16 @@ if __name__ == '__main__':
 			gait_phase_list = [0]
 			human_speed_factor_list = [1]
 			robot_speed_factor_list = [1]
-		walker_scaling = 1/1.75
+		walker_scaling = 1.0
 		result = case_both_moving_forward(urdf_path,
 			robot_angle_list,
 			human_angle_list,
 			gait_phase_list,
 			human_speed_factor_list,
 			robot_speed_factor_list,
-			walker_scaling)
+			walker_scaling,
+			shuffle = True)
+		quit()
 	elif args.case == '5':
 		if args.robot == 'qolo':
 			urdf_path = '../data/man_on_qolo/man_x_partitioned_on_qolo_fixed.urdf'

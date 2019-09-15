@@ -2,7 +2,7 @@ clear all
 %close all
 
 % 3 controller parameters
-actuator_force_max = 000; % set it to zero for no control
+actuator_force_max = 6000; % set it to zero for no control
 actuator_force_rise_time = 0.001;
 actuator_delay = 0.000;
 k_shield = 20000;
@@ -20,9 +20,14 @@ k_hand = 75000;
         k_wheel = 1000;
 
         k_hand = 75000;
+                k_shield = 10000;
+                k_qolo = 10000;
+                k_computer = 10000;
+                k_wheel = 1000;
+                k_hand = 75000;
 robot_spring_constants = [k_shield, k_qolo,k_computer, k_wheel, k_hand];
 
-phase_1_output = load('qolo_contact_points_case_4_with_velocities.mat');
+phase_1_output = load('qolo_contact_points_case_4_with_velocities_child.mat');
 F_contact_peak_per_iteration = zeros(size(phase_1_output.result, 1), 1);
 F_ref_per_iteration = zeros(size(phase_1_output.result, 1), 1);
 alignment_normal_axle_per_iteration = zeros(size(phase_1_output.result, 1), 1);
@@ -36,7 +41,10 @@ for i = 1:size(phase_1_output.result, 1)
     F_threshold_per_iteration(i) = F_threshold;
 end
 
-save('qolo_case_4_force_peaks_phase_2.mat', 'F_contact_peak_per_iteration')
+hot_cmap = colormap('hot');
+color_coding = hot_cmap(max(min(round(15*F_contact_peak_per_iteration./F_threshold_per_iteration),size(hot_cmap,1)), 1), :);
+F_normalize_per_iteration = F_contact_peak_per_iteration./F_threshold_per_iteration;
+save('qolo_case_4_force_peaks_phase_2_child.mat', 'F_contact_peak_per_iteration', 'F_normalize_per_iteration', 'color_coding')
 
 % remove near misses
 near_miss_indicator_vector = F_contact_peak_per_iteration == 0;

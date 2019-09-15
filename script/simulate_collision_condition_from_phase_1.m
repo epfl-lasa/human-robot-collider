@@ -38,7 +38,7 @@ x_contact_normal = phase_1_output_of_one_iteration(14); % rotated by pi/2
 y_contact_normal = -phase_1_output_of_one_iteration(13); % rotated by pi/2
 spring_constant = get_spring_constant_by_link_indices(phase_1_output_of_one_iteration(2), ...
     phase_1_output_of_one_iteration(7:9), robot_spring_constants);
-m_h	= reference_mass_by_link_indices(phase_1_output_of_one_iteration(2));
+m_h	= reference_mass_by_link_indices(phase_1_output_of_one_iteration(2))*phase_1_output_of_one_iteration(20);
 
 % initial state (explanation below in the ODE function)
 z_init = [0,0, y_r_initial,-robot_speed, -pi/2,0, x_h_initial,v_h_initial(1), y_h_initial,v_h_initial(2)];
