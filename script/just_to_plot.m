@@ -1,4 +1,9 @@
  
+clear all
+close all
+
+load('Stiffness_Simulation.mat');
+
 nfig = 1;
 colm1=[51/255 153/255 255/255];
 
@@ -28,10 +33,8 @@ colm1=[51/255 153/255 255/255];
 
         end
 
-        FigName = 'a';
-
+        FigName = 'Stiffness_effect';
         Xlabel = 'Stiffness [N/m]';
-
         Ylabel = 'Mean Force Peak [N]';
 
         Legends = {};
@@ -43,7 +46,7 @@ RECORD = true;
 
         MarkersSizes = 14;
 
-        LinesWidths = 2;
+        LinesWidths = 3;
 
         FigureFile = 'epsc'; %'epsc';
 
@@ -53,39 +56,42 @@ RECORD = true;
 
         set(gcf, 'name', FigName);
 
-        set(gcf, 'Position', [10 10 780 480]);
+        set(gcf, 'Position', [10 10 780 280]);
 
         set(gca,'FontName',Fonts,...
                 'FontSize', FontSizes,...
                 'LineWidth',LinesWidths);
-            
-            
-
 
       %title(title);
 
-        hold on;
-
-        grid on;
-
+        hold on; grid on;
         hYLabel=ylabel(Ylabel);
-
         hXLabel=xlabel(Xlabel);
-
-        plot(k_bumper_vec, mean_force)
+        P1 = plot(k_bumper_vec, mean_force...
+            ,'Color',Bcol6,'LineWidth',LinesWidths);
         
-
-    %     box off
-
-    %     axis tight
-
-    %     legalpha('No control','Emergency Braking','Controlled Braking',...
-
-    %             'location','northwest')
-
-    %     legend boxoff
-
-
+        % Load Data of Stiffness for Controlled braking
+        load('Stiffness_Simulation_2.mat');
+        % Load Data of Stiffness for brake
+        hold on; 
+        P2 = plot(k_bumper_vec, mean_force...
+            ,'-','Color',Rco6,'LineWidth',LinesWidths);
+        
+        % Load Data of Stiffness for Controlled braking
+        load('Stiffness_Simulation_3.mat');
+        % Load Data of Stiffness for brake controlled
+        hold on; 
+        P3 = plot(k_bumper_vec, mean_force...
+            ,'-','Color',Ocol3,'LineWidth',LinesWidths);
+        
+        legends = {'No Control' 'Emergency Braking' 'Controlled Braking'};
+        hLegend = legend([P1, P2, P3],...
+              legends, ...
+              'FontName',Fonts,...
+              'FontSize', FontSizes,'FontWeight','bold',...
+              'orientation', 'vertical',...
+              'location', 'southeast' );
+    
         set([hXLabel, hYLabel]  , ...
                 'FontName',  Fonts,...
                 'FontSize',  FontSizes,...
