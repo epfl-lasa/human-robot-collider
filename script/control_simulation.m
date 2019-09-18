@@ -2,7 +2,7 @@ clear all
 %close all
 
 % 3 controller parameters
-actuator_force_max = 6000; % set it to zero for no control
+actuator_force_max = 0;%600; %6000; % set it to zero for no control
 actuator_force_rise_time = 0.001;
 actuator_delay = 0.000;
 k_shield = 20000;
@@ -40,7 +40,7 @@ for i = 1:size(phase_1_output.result, 1)
     alignment_normal_axle_per_iteration(i) = alignment_normal_axle;
     F_threshold_per_iteration(i) = F_threshold;
 end
-
+return
 hot_cmap = colormap('hot');
 color_coding = hot_cmap(max(min(round(15*F_contact_peak_per_iteration./F_threshold_per_iteration),size(hot_cmap,1)), 1), :);
 F_normalize_per_iteration = F_contact_peak_per_iteration./F_threshold_per_iteration;

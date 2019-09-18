@@ -7,6 +7,32 @@ import scipy.io as sio
 
 import argparse
 
+class SphericalHighlight():
+	def __init__(self, n_spheres, r_min, r_max, duration, physics_client_id):
+		self.duration = duration
+		colSphereId = p.createCollisionShape(p.GEOM_SPHERE,
+			radius = 0.001, physicsClientId=physics_client_id)
+		self.list_of_spheres = []
+		for i in range(n_spheres):
+			r = r_min + (r_max - r_min)*i/float(n_spheres-1)
+			visSphereId = p.createVisualShape(p.GEOM_SPHERE, radius = r,
+				physicsClientId=physics_client_id)
+			sphere_id = p.createMultiBody(0, colSphereId, visSphereId, [0,0,100],
+				physicsClientId=physics_client_id)
+			sdl = p.getVisualShapeData(sphere_id, physicsClientId=physics_client_id)
+			p.changeVisualShape(sphere_id, sdl[0][1], rgbaColor=[1, 1, 0.8, 0.5],
+				physicsClientId=physics_client_id)
+			self.list_of_spheres.append(sphere_id)
+	
+	def highlight(self, target_position):
+		for i in range(2):
+			actual_target_position = target_position*(1-i) + i*np.array([0,0,100])
+			for j in range(len(self.list_of_spheres)):
+				sphere_index = (len(self.list_of_spheres)-1-j)*i + j*(1-i)
+				p.resetBasePositionAndOrientation(self.list_of_spheres[sphere_index],
+					actual_target_position,[0,0,0,1])
+				time.sleep(float(self.duration)/len(self.list_of_spheres)/2.0)
+
 def rotate_by_quaternion(vec3, q):
 	R = p.getMatrixFromQuaternion(q)
 	result = [
@@ -160,7 +186,7 @@ def case_both_moving_forward(robot_urdf_path, robot_angle_list, human_angle_list
 
 	# set up Bullet with the robot and the walking man
 	show_GUI = True
-	fast_forward = True
+	fast_forward = False
 	if not show_GUI:
 		physics_client_id = p.connect(p.DIRECT)
 	else:
@@ -175,8 +201,9 @@ def case_both_moving_forward(robot_urdf_path, robot_angle_list, human_angle_list
 		walking_man.setColorForPartitionedCase4()
 		p.configureDebugVisualizer(p.COV_ENABLE_GUI,0)
 		p.resetDebugVisualizerCamera(1.7,-30,-5,[0,0,0.8])
+		hl = SphericalHighlight(30, 0.003, 0.3, 2.5, physics_client_id)
 
-	show_one_box = True
+	show_one_box = False
 	if show_one_box:
 		colBoxId = p.createCollisionShape(p.GEOM_BOX, halfExtents = [50,50,50])
 		box_id = p.createMultiBody(0, colBoxId, -1, [0, 0, -50], [0,0,0,1])
@@ -184,7 +211,7 @@ def case_both_moving_forward(robot_urdf_path, robot_angle_list, human_angle_list
 		p.changeVisualShape(box_id, shape_data[0][1], 
 					rgbaColor=[0.7,0.7,0.7, 1])
 
-	show_boxes = False
+	show_boxes = True
 	if (show_boxes and show_GUI):
 		colBoxIds = []
 		thickness = 4.0
@@ -241,6 +268,7 @@ def case_both_moving_forward(robot_urdf_path, robot_angle_list, human_angle_list
 								for cp in contact_points:
 									if cp[8] <= 0.0:
 										collision_free = False
+										last_collision_point = cp[5] 
 										point_A_link_local = get_link_local_coordinates(walking_man.body_id, cp[3], cp[5])
 										# compute the velocity of the contact point on the human via finite differences
 										# 1) Get the point in link-local coordinates
@@ -303,8 +331,11 @@ def case_both_moving_forward(robot_urdf_path, robot_angle_list, human_angle_list
 									time.sleep(0.01)
 							if time_out and collision_free:
 								number_of_collision_free_iterations += 1
-							if show_GUI:
-								time.sleep(4)
+							elif show_GUI:
+								time.sleep(0.5)
+								hl.highlight(np.array(last_collision_point))
+								time.sleep(0.5)
+			
 						else:
 							number_of_collision_free_iterations += 1
 						iteration_number += 1
