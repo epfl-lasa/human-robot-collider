@@ -1,94 +1,98 @@
-function [F_contact_peak, F_ref, alignment_normal_axle, F_threshold] = simulate_collision_condition_from_phase_1(phase_1_output_of_one_iteration, ...
-    actuator_force_max, actuator_force_rise_time, actuator_delay, robot_spring_constants)
-% phase_1_output_of_one_iteration:
-%   [iteration_number, link_1_index, link_2_index, point1-x,-y,-z, point2-x,-y,-z, velocity-point1-x,-y,-z,
-%    contact_normal_2_to_1-x,-y,-z, robot_speed, robot_angle, human_angle, initial_gait_phase]
-v_rel = [phase_1_output_of_one_iteration(10); phase_1_output_of_one_iteration(11)];
-cn_global = [phase_1_output_of_one_iteration(13); phase_1_output_of_one_iteration(14)];
+function [F_contact_peak, F_ref, alignment_normal_axle, F_threshold] = ...
+    simulate_collision_condition_from_phase_1(phase_1_output_of_one_iteration, ...
+    actuator_force_max, actuator_force_rise_time, actuator_delay, robot_spring_constants,...
+    vidobj,RECORD)
+    % phase_1_output_of_one_iteration:
+    %   [iteration_number, link_1_index, link_2_index, point1-x,-y,-z, point2-x,-y,-z, velocity-point1-x,-y,-z,
+    %    contact_normal_2_to_1-x,-y,-z, robot_speed, robot_angle, human_angle, initial_gait_phase]
+    v_rel = [phase_1_output_of_one_iteration(10); phase_1_output_of_one_iteration(11)];
+    cn_global = [phase_1_output_of_one_iteration(13); phase_1_output_of_one_iteration(14)];
 
-% get the force threshold
-F_threshold = force_threshold_by_link_indices(phase_1_output_of_one_iteration(2));
+    % get the force threshold
+    F_threshold = force_threshold_by_link_indices(phase_1_output_of_one_iteration(2));
 
-if v_rel'*cn_global > 0
-    F_contact_peak = 0;
-    F_ref = 0;
-    alignment_normal_axle = nan;
-    return
-end
-
-robot_speed = phase_1_output_of_one_iteration(16);
-x_h_initial = phase_1_output_of_one_iteration(4);
-y_h_initial = phase_1_output_of_one_iteration(5);
-v_h_initial = [0; -robot_speed] + [phase_1_output_of_one_iteration(10); ...
-    phase_1_output_of_one_iteration(11)];
-
-% constants (explanation below in the ODE function)
-m_r	= 100; % to be set according to Qolo data
-i_r	= m_r/2*0.3^2; % to be set according to Qolo data
-L = 0.4; % to be set according to Qolo data
-D = 0.2; % to be set according to Qolo data
-
-qolo_model_axle_default_y = 0.254475;
-y_r_initial = D-qolo_model_axle_default_y;
-
-% parameters (explanation below in the ODE function)
-x_initial_contact_point = -y_h_initial + y_r_initial; % rotated by pi/2 and shifted
-y_initial_contact_point = x_h_initial; % rotated by pi/2
-x_contact_normal = phase_1_output_of_one_iteration(14); % rotated by pi/2
-y_contact_normal = -phase_1_output_of_one_iteration(13); % rotated by pi/2
-spring_constant = get_spring_constant_by_link_indices(phase_1_output_of_one_iteration(2), ...
-    phase_1_output_of_one_iteration(7:9), robot_spring_constants);
-m_h	= reference_mass_by_link_indices(phase_1_output_of_one_iteration(2))*phase_1_output_of_one_iteration(20);
-
-% initial state (explanation below in the ODE function)
-z_init = [0,0, y_r_initial,-robot_speed, -pi/2,0, x_h_initial,v_h_initial(1), y_h_initial,v_h_initial(2)];
-
-% integrate the ODE
-t_step = 0.001;
-options = odeset('Events', @(t,z) ODE_stopping_events_function(t,z, m_r, i_r, m_h, ...
-    x_initial_contact_point, y_initial_contact_point,...
-    x_contact_normal, y_contact_normal, spring_constant, D, L, ...
-    actuator_force_max, actuator_force_rise_time, actuator_delay));
-[T,Z] = ode45(@(t, z) ODE_rigid_body_and_point_on_a_plane(t, z, m_r, i_r, m_h, ...
-    x_initial_contact_point, y_initial_contact_point,...
-    x_contact_normal, y_contact_normal, spring_constant, D, L, ...
-    actuator_force_max, actuator_force_rise_time, actuator_delay), ...
-    0:t_step:0.5, z_init', options);
-
-% get force peak
-F_contact_peak = 0;
-Fc_mag_vec = zeros(length(T),1);
-for i = 1:length(T)
-    [Fx_contact_on_robot, Fy_contact_on_robot, x_contact_point_on_robot, ...
-        y_contact_point_on_robot] = compute_contact( ...
-            T(i), Z(i,:)', x_initial_contact_point, y_initial_contact_point, ...
-            x_contact_normal, y_contact_normal, spring_constant);
-    Fc_mag = sqrt(Fx_contact_on_robot^2 + Fy_contact_on_robot^2);
-    if Fc_mag > F_contact_peak
-        F_contact_peak = Fc_mag;
+    if v_rel'*cn_global > 0
+        F_contact_peak = 0;
+        F_ref = 0;
+        alignment_normal_axle = nan;
+        return
     end
-    Fc_mag_vec(i) = Fc_mag;
-end
 
-% compute it according to simple analytic formula
-F_ref = -v_rel'*cn_global*sqrt(1/(1/m_h + 1/m_r)*spring_constant);
+    robot_speed = phase_1_output_of_one_iteration(16);
+    x_h_initial = phase_1_output_of_one_iteration(4);
+    y_h_initial = phase_1_output_of_one_iteration(5);
+    v_h_initial = [0; -robot_speed] + [phase_1_output_of_one_iteration(10); ...
+        phase_1_output_of_one_iteration(11)];
 
-% compute alignment between collision normal and wheel axle
-alignment_normal_axle = abs(y_contact_normal);
+    % constants (explanation below in the ODE function)
+    m_r	= 100; % to be set according to Qolo data
+    i_r	= m_r/2*0.3^2; % to be set according to Qolo data
+    L = 0.4; % to be set according to Qolo data
+    D = 0.2; % to be set according to Qolo data
 
-% if F_contact_peak > 1200
-%     x_contact_normal
-%     y_contact_normal
-%     v_rel'*cn_global
-%     v_rel
-% end
+    qolo_model_axle_default_y = 0.254475;
+    y_r_initial = D-qolo_model_axle_default_y;
 
-% animate (optional)
-%return
-slow_motion_factor = 10;
-clf
-animate_trajectory(t_step, slow_motion_factor,Z, T, x_initial_contact_point, y_initial_contact_point,...
-    x_contact_normal, y_contact_normal, L, D, spring_constant)
+    % parameters (explanation below in the ODE function)
+    x_initial_contact_point = -y_h_initial + y_r_initial; % rotated by pi/2 and shifted
+    y_initial_contact_point = x_h_initial; % rotated by pi/2
+    x_contact_normal = phase_1_output_of_one_iteration(14); % rotated by pi/2
+    y_contact_normal = -phase_1_output_of_one_iteration(13); % rotated by pi/2
+    spring_constant = get_spring_constant_by_link_indices(phase_1_output_of_one_iteration(2), ...
+        phase_1_output_of_one_iteration(7:9), robot_spring_constants);
+    m_h	= reference_mass_by_link_indices(phase_1_output_of_one_iteration(2))*phase_1_output_of_one_iteration(20);
+
+    % initial state (explanation below in the ODE function)
+    z_init = [0,0, y_r_initial,-robot_speed, -pi/2,0, x_h_initial,v_h_initial(1), y_h_initial,v_h_initial(2)];
+
+    % integrate the ODE
+    t_step = 0.001;
+    options = odeset('Events', @(t,z) ODE_stopping_events_function(t,z, m_r, i_r, m_h, ...
+        x_initial_contact_point, y_initial_contact_point,...
+        x_contact_normal, y_contact_normal, spring_constant, D, L, ...
+        actuator_force_max, actuator_force_rise_time, actuator_delay));
+    [T,Z] = ode45(@(t, z) ODE_rigid_body_and_point_on_a_plane(t, z, m_r, i_r, m_h, ...
+        x_initial_contact_point, y_initial_contact_point,...
+        x_contact_normal, y_contact_normal, spring_constant, D, L, ...
+        actuator_force_max, actuator_force_rise_time, actuator_delay), ...
+        0:t_step:0.5, z_init', options);
+
+    % get force peak
+    F_contact_peak = 0;
+    Fc_mag_vec = zeros(length(T),1);
+    for i = 1:length(T)
+        [Fx_contact_on_robot, Fy_contact_on_robot, x_contact_point_on_robot, ...
+            y_contact_point_on_robot] = compute_contact( ...
+                T(i), Z(i,:)', x_initial_contact_point, y_initial_contact_point, ...
+                x_contact_normal, y_contact_normal, spring_constant);
+        Fc_mag = sqrt(Fx_contact_on_robot^2 + Fy_contact_on_robot^2);
+        if Fc_mag > F_contact_peak
+            F_contact_peak = Fc_mag;
+        end
+        Fc_mag_vec(i) = Fc_mag;
+    end
+
+    % compute it according to simple analytic formula
+    F_ref = -v_rel'*cn_global*sqrt(1/(1/m_h + 1/m_r)*spring_constant);
+
+    % compute alignment between collision normal and wheel axle
+    alignment_normal_axle = abs(y_contact_normal);
+
+    % if F_contact_peak > 1200
+    %     x_contact_normal
+    %     y_contact_normal
+    %     v_rel'*cn_global
+    %     v_rel
+    % end
+
+    % animate (optional)
+    %return
+    slow_motion_factor = 10;
+    clf
+    animate_trajectory(t_step, slow_motion_factor,Z, T,...
+        x_initial_contact_point, y_initial_contact_point,...
+        x_contact_normal, y_contact_normal, L, D, spring_constant,...
+        vidobj,RECORD)
 end
 
 function k = get_spring_constant_by_link_indices(human_link_idx, qolo_point, robot_spring_constants)
@@ -429,158 +433,215 @@ end
 end
 
 %% for the visualization
-function animate_trajectory(t_step, slow_motion_factor, Z, T, x_initial_contact_point, y_initial_contact_point,...
-    x_contact_normal, y_contact_normal, L, D, spring_constant)
-s = struct;
-s.Z = Z;
-s.T = T;
-s.x_initial_contact_point = x_initial_contact_point;
-s.y_initial_contact_point = y_initial_contact_point;
-s.x_contact_normal = x_contact_normal;
-s.y_contact_normal = y_contact_normal;
-s.L = L;
-s.D = D;
-s.spring_constant = spring_constant;
-s.slow_motion_factor = slow_motion_factor;
-animation_timer = timer('UserData', s, 'ExecutionMode','fixedRate', 'period', t_step*slow_motion_factor, ...
-         'TasksToExecute', size(Z,1), ...
-         'TimerFcn', @animation_timer_fcn, 'StartFcn', @animation_timer_start_fcn);
-start(animation_timer)
-while ~strcmp(animation_timer.running, 'off')
-    pause(0.1)
-end
-delete(animation_timer)
+function animate_trajectory(t_step, slow_motion_factor, ...
+            Z, T, x_initial_contact_point, y_initial_contact_point,...
+            x_contact_normal, y_contact_normal, L, D, spring_constant,...
+            vidobj,RECORD)
+    s = struct;
+    s.Z = Z;
+    s.T = T;
+    s.x_initial_contact_point = x_initial_contact_point;
+    s.y_initial_contact_point = y_initial_contact_point;
+    s.x_contact_normal = x_contact_normal;
+    s.y_contact_normal = y_contact_normal;
+    s.L = L;
+    s.D = D;
+    s.spring_constant = spring_constant;
+    s.slow_motion_factor = slow_motion_factor;
+    animation_timer = timer('UserData', s, 'ExecutionMode',...
+        'fixedRate', 'period', t_step*slow_motion_factor, ...
+             'TasksToExecute', size(Z,1), ...
+             'TimerFcn', @animation_timer_fcn, 'StartFcn', @animation_timer_start_fcn);
+         
+    start(animation_timer)
+    while ~strcmp(animation_timer.running, 'off')
+        pause(0.1)
+        if RECORD
+         frame = getframe(gcf); % capture current figure
+%              vidobj = addframe(vidobj,frame); % append frame
+         writeVideo(vidobj,frame)
+        end
+    end
+    delete(animation_timer)
 end
 
 function animation_timer_start_fcn(timer_object, event)
-hold on
-x_r = timer_object.UserData.Z(1,1);
-y_r = timer_object.UserData.Z(1,3);
-timer_object.UserData.robot_line_h = plot(x_r,y_r, 'ko');
+    hold on
+    load('ColorsData.mat');  % colm# , Bcol#, Rcol#, Ocol#, Gcol# --> # 1-8
+    FaceALphas = 0.2;
+    FontSizes = 14;
+    MarkersSizes = 10;
+    LinesWidths = 2;
+    FigureFile = 'epsc'; %'epsc';
+    Fonts = 'Times New Roman';
+    
+    x_r = timer_object.UserData.Z(1,1);
+    y_r = timer_object.UserData.Z(1,3);
+    
+    timer_object.UserData.robot_line_h = plot(x_r,y_r, 'ko',...
+                'MarkerSize',MarkersSizes,...
+                'LineWidth', LinesWidths);
+            
+    x_h = timer_object.UserData.Z(1,7);
+    y_h = timer_object.UserData.Z(1,9);
+    timer_object.UserData.human_line_h = plot(x_h,y_h, 'o',...
+                'Color',Ocol6,...
+                'MarkerSize',MarkersSizes,...
+                'LineWidth', LinesWidths);
 
-x_h = timer_object.UserData.Z(1,7);
-y_h = timer_object.UserData.Z(1,9);
-timer_object.UserData.human_line_h = plot(x_h,y_h, 'mo');
+    if ismac
+        A=imread('..\data\planar_shape.png');
+    else
+        A=imread('../data/planar_shape.png');
+    end
 
-A=imread('../data/planar_shape.png');
-A=[A(:,end,:), A];
-Gray = rgb2gray(A);
-BW = imbinarize(Gray);
-[B,L] = bwboundaries(BW);
-boundary = B{2};
-scaling = 0.54/295;
-timer_object.UserData.qolo_shape = [scaling*boundary(:,1)-0.76/2, scaling*boundary(:,2)-0.225-0.254475];
-timer_object.UserData.qolo_h = plot(timer_object.UserData.qolo_shape(:,1), ...
-    timer_object.UserData.qolo_shape(:,2), 'Color', [0.3,0.3,0.3], 'LineWidth', 1);
+    A=[A(:,end,:), A];
+    Gray = rgb2gray(A);
+    BW = imbinarize(Gray);
+    [B,L] = bwboundaries(BW);
+    boundary = B{2};
+    scaling = 0.54/295;
+    timer_object.UserData.qolo_shape = ...
+        [scaling*boundary(:,1)-0.76/2, scaling*boundary(:,2)-0.225-0.254475];
+    timer_object.UserData.qolo_h = plot(timer_object.UserData.qolo_shape(:,1), ...
+        timer_object.UserData.qolo_shape(:,2),...
+        'Color', [0.7,0.7,0.7],...
+        'LineWidth', LinesWidths);
 
-[X_axle, Y_axle, X_normal, Y_normal, x_init_c, y_init_c,X_Qolo,Y_Qolo, X_contact_tangent, Y_contact_tangent] = get_robot_fixed_shapes( ...
-    timer_object.UserData.Z(1,:), timer_object.UserData.x_initial_contact_point, ...
-    timer_object.UserData.y_initial_contact_point, timer_object.UserData.x_contact_normal, ...
-    timer_object.UserData.y_contact_normal, timer_object.UserData.L, timer_object.UserData.D, ...
-    timer_object.UserData.qolo_shape(:,1), timer_object.UserData.qolo_shape(:,2));
-timer_object.UserData.axle_line_h = plot(X_axle,Y_axle, 'k');
-timer_object.UserData.init_c_line_h = plot(x_init_c,y_init_c, 'go');
-timer_object.UserData.normal_line_h = plot(X_normal,Y_normal, 'g');
-timer_object.UserData.tangent_line_h = plot(X_contact_tangent, Y_contact_tangent, 'g--');
+    [X_axle, Y_axle, X_normal, Y_normal, x_init_c,...
+        y_init_c,X_Qolo,Y_Qolo, X_contact_tangent, Y_contact_tangent] = get_robot_fixed_shapes( ...
+        timer_object.UserData.Z(1,:), timer_object.UserData.x_initial_contact_point, ...
+        timer_object.UserData.y_initial_contact_point, timer_object.UserData.x_contact_normal, ...
+        timer_object.UserData.y_contact_normal, timer_object.UserData.L, timer_object.UserData.D, ...
+        timer_object.UserData.qolo_shape(:,1), timer_object.UserData.qolo_shape(:,2));
+    
+    timer_object.UserData.axle_line_h = plot(X_axle,Y_axle, 'k',...
+        'LineWidth', LinesWidths);
+    timer_object.UserData.init_c_line_h = plot(x_init_c,y_init_c, 'o',...
+        'Color',Bcol6,...
+        'MarkerSize',MarkersSizes);
+    timer_object.UserData.normal_line_h = plot(X_normal,Y_normal,...
+        'Color',Bcol6,...
+        'LineWidth', LinesWidths);
+    timer_object.UserData.tangent_line_h = plot(X_contact_tangent, Y_contact_tangent, '--',...
+        'Color',Bcol6,...
+        'LineWidth', LinesWidths+0.2);
 
-timer_object.UserData.force_on_r_h = quiver(0,0,0,0,'Color','r', 'LineWidth', 1);
-timer_object.UserData.force_on_h_h = quiver(0,0,0,0,'Color','r', 'LineWidth', 1);
-daspect([1, 1, 1])
+    timer_object.UserData.force_on_r_h = quiver(0,0,0,0,'Color','r', 'LineWidth', LinesWidths);
+    timer_object.UserData.force_on_h_h = quiver(0,0,0,0,'Color','r', 'LineWidth', LinesWidths);
+    daspect([1, 1, 1])
 
-min_x = min([timer_object.UserData.Z(:,1); timer_object.UserData.Z(:,7)]);
-max_x = max([timer_object.UserData.Z(:,1); timer_object.UserData.Z(:,7)]);
-min_y = min([timer_object.UserData.Z(:,3); timer_object.UserData.Z(:,9)]);
-max_y = max([timer_object.UserData.Z(:,3); timer_object.UserData.Z(:,9)]);
-max_delta = max([max_x-min_x, max_y-min_y]);
-set(gca, 'XLim', [min_x - 1.1, min_x + max_delta + 1.1])
-set(gca, 'YLim', [min_y - 1.1, min_y + max_delta + 1.1])
-set(gca, 'XLim', [-1,1])
-set(gca, 'YLim', [-1,1])
+    min_x = min([timer_object.UserData.Z(:,1); timer_object.UserData.Z(:,7)]);
+    max_x = max([timer_object.UserData.Z(:,1); timer_object.UserData.Z(:,7)]);
+    min_y = min([timer_object.UserData.Z(:,3); timer_object.UserData.Z(:,9)]);
+    max_y = max([timer_object.UserData.Z(:,3); timer_object.UserData.Z(:,9)]);
+    max_delta = max([max_x-min_x, max_y-min_y]);
+    set(gca, 'XLim', [min_x - 1.1, min_x + max_delta + 1.1])
+    set(gca, 'YLim', [min_y - 1.1, min_y + max_delta + 1.1])
+    set(gca, 'XLim', [-1,1])
+    set(gca, 'YLim', [-1,1])
 
-legend([timer_object.UserData.robot_line_h, ...
-    timer_object.UserData.human_line_h, ...
-    timer_object.UserData.axle_line_h, ...
-    timer_object.UserData.normal_line_h, ...
-    timer_object.UserData.tangent_line_h, ...
-    timer_object.UserData.init_c_line_h, ...
-    timer_object.UserData.force_on_r_h], ...
-    {'Robot COM', 'Human', 'Wheel Axle', 'Contact Normal', 'Contact Tangent', 'Initial Contact Point', 'Contact Force'})
-
-title("Collision Animation ("+string(timer_object.UserData.slow_motion_factor)+"x slow motion)")
+    legend([timer_object.UserData.robot_line_h, ...
+                timer_object.UserData.human_line_h, ...
+                timer_object.UserData.axle_line_h, ...
+                timer_object.UserData.normal_line_h, ...
+                timer_object.UserData.tangent_line_h, ...
+                timer_object.UserData.init_c_line_h, ...
+                timer_object.UserData.force_on_r_h], ...
+            {'Robot COM', 'Human', 'Wheel Axle',...
+                'Contact Normal', 'Contact Tangent',...
+                'Initial Contact Point', 'Contact Force'},...
+              'FontName',Fonts,...
+              'FontSize', FontSizes,'FontWeight','bold',...
+              'orientation', 'vertical',...
+              'location', 'northeastOutside' );
+          
+        set(gcf, 'name', 'Collision_animation');
+        set(gcf, 'Position', [10 10 980 480]);
+        set(gca,'FontName',Fonts,...
+                'FontSize', FontSizes+2,...
+                'LineWidth',LinesWidths);
+        set(gcf,'PaperPositionMode', 'auto');
+%         set([hXLabel, hYLabel]  , ...
+%                 'FontName',  Fonts,...
+%                 'FontSize',  FontSizes,...
+%                 'color',     [0 0 0]);
+            
+    title("Collision Animation ("+string(timer_object.UserData.slow_motion_factor)+"x slow motion)")
 end
 
 function animation_timer_fcn(timer_object, event)
-i = timer_object.TasksExecuted;
-x_r = timer_object.UserData.Z(i,1);
-y_r = timer_object.UserData.Z(i,3);
-x_h = timer_object.UserData.Z(i,7);
-y_h = timer_object.UserData.Z(i,9);
-x_initial_contact_point = timer_object.UserData.x_initial_contact_point;
-y_initial_contact_point = timer_object.UserData.y_initial_contact_point;
-x_initial_contact_normal = timer_object.UserData.x_contact_normal;
-y_initial_contact_normal = timer_object.UserData.y_contact_normal;
-[X_axle, Y_axle, X_normal, Y_normal, x_init_c, y_init_c, X_Qolo, Y_Qolo, X_contact_tangent, Y_contact_tangent] = get_robot_fixed_shapes( ...
-    timer_object.UserData.Z(i,:), x_initial_contact_point, ...
-    y_initial_contact_point, x_initial_contact_normal, ...
-    y_initial_contact_normal, timer_object.UserData.L, timer_object.UserData.D, ...
-    timer_object.UserData.qolo_shape(:,1), timer_object.UserData.qolo_shape(:,2));
+    i = timer_object.TasksExecuted;
+    x_r = timer_object.UserData.Z(i,1);
+    y_r = timer_object.UserData.Z(i,3);
+    x_h = timer_object.UserData.Z(i,7);
+    y_h = timer_object.UserData.Z(i,9);
+    x_initial_contact_point = timer_object.UserData.x_initial_contact_point;
+    y_initial_contact_point = timer_object.UserData.y_initial_contact_point;
+    x_initial_contact_normal = timer_object.UserData.x_contact_normal;
+    y_initial_contact_normal = timer_object.UserData.y_contact_normal;
+    [X_axle, Y_axle, X_normal, Y_normal, x_init_c, y_init_c, X_Qolo, Y_Qolo, X_contact_tangent, Y_contact_tangent] = get_robot_fixed_shapes( ...
+        timer_object.UserData.Z(i,:), x_initial_contact_point, ...
+        y_initial_contact_point, x_initial_contact_normal, ...
+        y_initial_contact_normal, timer_object.UserData.L, timer_object.UserData.D, ...
+        timer_object.UserData.qolo_shape(:,1), timer_object.UserData.qolo_shape(:,2));
 
-t = timer_object.UserData.T(i);
-z = timer_object.UserData.Z(i,:)';
-spring_constant = timer_object.UserData.spring_constant;
-[Fx_contact_on_robot, Fy_contact_on_robot, x_contact_point_on_robot, ...
-    y_contact_point_on_robot] = compute_contact( ...
-        t, z, x_initial_contact_point, y_initial_contact_point, ...
-        x_initial_contact_normal, y_initial_contact_normal, spring_constant);
-    
-F_scale = 1/250;
+    t = timer_object.UserData.T(i);
+    z = timer_object.UserData.Z(i,:)';
+    spring_constant = timer_object.UserData.spring_constant;
+    [Fx_contact_on_robot, Fy_contact_on_robot, x_contact_point_on_robot, ...
+        y_contact_point_on_robot] = compute_contact( ...
+            t, z, x_initial_contact_point, y_initial_contact_point, ...
+            x_initial_contact_normal, y_initial_contact_normal, spring_constant);
 
-if isvalid(timer_object.UserData.robot_line_h)
-    set(timer_object.UserData.robot_line_h, 'XData', x_r, 'YData', y_r);
-    set(timer_object.UserData.human_line_h, 'XData', x_h, 'YData', y_h);
-    set(timer_object.UserData.axle_line_h, 'XData', X_axle, 'YData', Y_axle);
-    set(timer_object.UserData.init_c_line_h, 'XData', x_init_c, 'YData', y_init_c);
-    set(timer_object.UserData.normal_line_h, 'XData', X_normal, 'YData', Y_normal);
-    set(timer_object.UserData.qolo_h, 'XData', X_Qolo, 'YData', Y_Qolo);
-    set(timer_object.UserData.tangent_line_h, 'XData', X_contact_tangent, 'YData', Y_contact_tangent);
-    set(timer_object.UserData.force_on_r_h, 'XData', x_contact_point_on_robot-Fx_contact_on_robot*F_scale*0.9, ...
-        'YData', y_contact_point_on_robot-Fy_contact_on_robot*F_scale*0.9, 'UData', Fx_contact_on_robot*F_scale, ...
-        'VData', Fy_contact_on_robot*F_scale);
-    set(timer_object.UserData.force_on_h_h, 'XData', x_h+Fx_contact_on_robot*F_scale*0.9, ...
-        'YData', y_h+Fy_contact_on_robot*F_scale*0.9, 'UData', -Fx_contact_on_robot*F_scale, ...
-        'VData', -Fy_contact_on_robot*F_scale);
-    daspect([1 1 1])
-    set(gca, 'XLim', [-1,1])
-    set(gca, 'YLim', [-1,1])
-else
-    stop(timer_object)
-    return
-end
+    F_scale = 1/250;
+
+    if isvalid(timer_object.UserData.robot_line_h)
+        set(timer_object.UserData.robot_line_h, 'XData', x_r, 'YData', y_r);
+        set(timer_object.UserData.human_line_h, 'XData', x_h, 'YData', y_h);
+        set(timer_object.UserData.axle_line_h, 'XData', X_axle, 'YData', Y_axle);
+        set(timer_object.UserData.init_c_line_h, 'XData', x_init_c, 'YData', y_init_c);
+        set(timer_object.UserData.normal_line_h, 'XData', X_normal, 'YData', Y_normal);
+        set(timer_object.UserData.qolo_h, 'XData', X_Qolo, 'YData', Y_Qolo);
+        set(timer_object.UserData.tangent_line_h, 'XData', X_contact_tangent, 'YData', Y_contact_tangent);
+        set(timer_object.UserData.force_on_r_h, 'XData', x_contact_point_on_robot-Fx_contact_on_robot*F_scale*0.9, ...
+            'YData', y_contact_point_on_robot-Fy_contact_on_robot*F_scale*0.9, 'UData', Fx_contact_on_robot*F_scale, ...
+            'VData', Fy_contact_on_robot*F_scale);
+        set(timer_object.UserData.force_on_h_h, 'XData', x_h+Fx_contact_on_robot*F_scale*0.9, ...
+            'YData', y_h+Fy_contact_on_robot*F_scale*0.9, 'UData', -Fx_contact_on_robot*F_scale, ...
+            'VData', -Fy_contact_on_robot*F_scale);
+        daspect([1 1 1])
+        set(gca, 'XLim', [-1,1])
+        set(gca, 'YLim', [-1,1])
+    else
+        stop(timer_object)
+        return
+    end
 end
 
 function [X_axle, Y_axle, X_normal, Y_normal, x_init_c, y_init_c, X_Qolo, Y_Qolo, X_contact_tangent, Y_contact_tangent] = get_robot_fixed_shapes( ...
     z, x_initial_contact_point, y_initial_contact_point, x_contact_normal, y_contact_normal, L, D, X_Qolo_init, Y_Qolo_init)
-x_r = z(1);
-y_r = z(3);
-phi_r = z(5);
-R = [cos(phi_r), -sin(phi_r); sin(phi_r), cos(phi_r)];
-init_c = R*[x_initial_contact_point; y_initial_contact_point] + [x_r; y_r];
-x_init_c = init_c(1);
-y_init_c = init_c(2);
-axle_XY_local = [D, D; -L/2, L/2];
-axle_XY_global = R*axle_XY_local + [x_r; y_r]*ones(1,2);
-X_axle = axle_XY_global(1,:);
-Y_axle = axle_XY_global(2,:);
-contact_normal_global = R*[x_contact_normal; y_contact_normal];
-X_normal = [x_init_c, x_init_c + contact_normal_global(1)];
-Y_normal = [y_init_c, y_init_c + contact_normal_global(2)];
+    x_r = z(1);
+    y_r = z(3);
+    phi_r = z(5);
+    R = [cos(phi_r), -sin(phi_r); sin(phi_r), cos(phi_r)];
+    init_c = R*[x_initial_contact_point; y_initial_contact_point] + [x_r; y_r];
+    x_init_c = init_c(1);
+    y_init_c = init_c(2);
+    axle_XY_local = [D, D; -L/2, L/2];
+    axle_XY_global = R*axle_XY_local + [x_r; y_r]*ones(1,2);
+    X_axle = axle_XY_global(1,:);
+    Y_axle = axle_XY_global(2,:);
+    contact_normal_global = R*[x_contact_normal; y_contact_normal];
+    X_normal = [x_init_c, x_init_c + contact_normal_global(1)];
+    Y_normal = [y_init_c, y_init_c + contact_normal_global(2)];
 
-X_contact_tangent = [x_init_c - contact_normal_global(2), x_init_c + contact_normal_global(2)];
-Y_contact_tangent = [y_init_c + contact_normal_global(1), y_init_c - contact_normal_global(1)];
+    X_contact_tangent = [x_init_c - contact_normal_global(2), x_init_c + contact_normal_global(2)];
+    Y_contact_tangent = [y_init_c + contact_normal_global(1), y_init_c - contact_normal_global(1)];
 
-y_r_init = D-0.254475;
-R_90 = [cos(phi_r+pi/2), -sin(phi_r+pi/2); sin(phi_r+pi/2), cos(phi_r+pi/2)];
-XY_Qolo =[X_Qolo_init, Y_Qolo_init-y_r_init]*R_90' + ones(size(Y_Qolo_init))*[x_r, y_r];
-X_Qolo = XY_Qolo(:,1);
-Y_Qolo = XY_Qolo(:,2);
+    y_r_init = D-0.254475;
+    R_90 = [cos(phi_r+pi/2), -sin(phi_r+pi/2); sin(phi_r+pi/2), cos(phi_r+pi/2)];
+    XY_Qolo =[X_Qolo_init, Y_Qolo_init-y_r_init]*R_90' + ones(size(Y_Qolo_init))*[x_r, y_r];
+    X_Qolo = XY_Qolo(:,1);
+    Y_Qolo = XY_Qolo(:,2);
 end
