@@ -1,30 +1,34 @@
 clear all 
-%close all
+close all
+clc
 
-% 3 controller parameters
-actuator_force_max = 0;%600; %6000; % set it to zero for no control
-actuator_force_rise_time = 0.001;
-actuator_delay = 0.000;
-k_shield = 20000;
-k_qolo = 30000;
-k_computer = 30000;
-k_wheel = 10000;
-k_hand = 75000;
+    moviefilename = 'Collision_animation_2';
+    RECORD = 1;
+    % 3 controller parameters
+    actuator_force_max = 0;%600; %6000; % set it to zero for no control
+    actuator_force_rise_time = 0.001;
+    actuator_delay = 0.000;
+    k_shield = 20000;
+    k_qolo = 30000;
+    k_computer = 30000;
+    k_wheel = 10000;
+    k_hand = 75000;
 
-        k_shield = 4000;
+    k_shield = 4000;
 
-        k_qolo = 8000;
+    k_qolo = 8000;
 
-        k_computer = 10000;
+    k_computer = 10000;
 
-        k_wheel = 1000;
+    k_wheel = 1000;
 
-        k_hand = 75000;
-                k_shield = 10000;
-                k_qolo = 10000;
-                k_computer = 10000;
-                k_wheel = 1000;
-                k_hand = 75000;
+    k_hand = 75000;
+            k_shield = 10000;
+            k_qolo = 10000;
+            k_computer = 10000;
+            k_wheel = 1000;
+            k_hand = 75000;
+                
 robot_spring_constants = [k_shield, k_qolo,k_computer, k_wheel, k_hand];
 
 phase_1_output = load('result_phase_1.mat');
@@ -32,14 +36,33 @@ F_contact_peak_per_iteration = zeros(size(phase_1_output.result, 1), 1);
 F_ref_per_iteration = zeros(size(phase_1_output.result, 1), 1);
 alignment_normal_axle_per_iteration = zeros(size(phase_1_output.result, 1), 1);
 F_threshold_per_iteration = zeros(size(phase_1_output.result, 1), 1);
-for i = 1:size(phase_1_output.result, 1)
-    [F_contact_peak, F_ref, alignment_normal_axle, F_threshold] = simulate_collision_condition_from_phase_1(phase_1_output.result(i,:), ...
-        actuator_force_max, actuator_force_rise_time, actuator_delay, robot_spring_constants);
+
+if RECORD
+    figure(1);
+    figN =  gcf;
+    %     figN.Color = 'black';
+    figN.InvertHardcopy = 'off';
+    %      aviobj = avifile(moviefilename, 'fps', 10, 'compression', 'none');
+    vidobj = VideoWriter(moviefilename,'MPEG-4');
+    vidobj.FrameRate = 10;
+    open(vidobj);
+end
+VidL = size(phase_1_output.result, 1);
+VidL = 60;
+for i = 40:240%
+    [F_contact_peak, F_ref, alignment_normal_axle, F_threshold] = ...
+        simulate_collision_condition_from_phase_1(phase_1_output.result(i,:), ...
+        actuator_force_max, actuator_force_rise_time, actuator_delay, robot_spring_constants,...
+        vidobj,RECORD);
+    
     F_contact_peak_per_iteration(i) = F_contact_peak;
     F_ref_per_iteration(i) = F_ref;
     alignment_normal_axle_per_iteration(i) = alignment_normal_axle;
     F_threshold_per_iteration(i) = F_threshold;
 end
+    if RECORD
+        close(vidobj);
+    end
 return
 hot_cmap = colormap('hot');
 color_coding = hot_cmap(max(min(round(15*F_contact_peak_per_iteration./F_threshold_per_iteration),size(hot_cmap,1)), 1), :);

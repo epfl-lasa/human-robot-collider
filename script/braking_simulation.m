@@ -93,6 +93,7 @@
         colm7=[0/255 52/255 222/255];
         colm8=[5/255 5/255 5/255];
         load('ColorsData');     % colm# , Bcol#, Rcol#, Ocol#, Gcol# --> # 1-8
+        
         if ismac
             figPath = 'Figures/';
         else
@@ -101,7 +102,8 @@
         FigName = 'Braking_Methods_Differences';
         Xlabel = 'Peak-Force-to-Pain-Limit-Ratio';
         Ylabel = 'Occurrence Count';
-        Legends = {'No detection','Emergency Braking','Controlled Braking', 'Threshold'};
+        Legends = {'No detection','Emergency Braking',...
+                        'Controlled Braking', 'Threshold'};
 
         FaceALphas = 0.2;
         FontSizes = 28;
@@ -119,8 +121,8 @@
       %title(title);
         hold on;
         grid on;
-        hYLabel=ylabel(Ylabel);
-        hXLabel=xlabel(Xlabel);
+        hYLabel = ylabel(Ylabel);
+        hXLabel = xlabel(Xlabel);
 
         H2 = histogram(F_peak{2},30, ...% Emergency Brake
                 'FaceAlpha', FaceALphas+0.2, 'FaceColor',Gcol6);  
