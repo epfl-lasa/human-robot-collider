@@ -27,7 +27,7 @@ k_hand = 75000;
                 k_hand = 75000;
 robot_spring_constants = [k_shield, k_qolo,k_computer, k_wheel, k_hand];
 
-phase_1_output = load('qolo_contact_points_case_4_with_velocities_child.mat');
+phase_1_output = load('result_phase_1.mat');
 F_contact_peak_per_iteration = zeros(size(phase_1_output.result, 1), 1);
 F_ref_per_iteration = zeros(size(phase_1_output.result, 1), 1);
 alignment_normal_axle_per_iteration = zeros(size(phase_1_output.result, 1), 1);
