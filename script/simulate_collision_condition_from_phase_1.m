@@ -85,7 +85,7 @@ alignment_normal_axle = abs(y_contact_normal);
 
 % animate (optional)
 %return
-slow_motion_factor = 10;
+slow_motion_factor = 50;
 clf
 animate_trajectory(t_step, slow_motion_factor,Z, T, x_initial_contact_point, y_initial_contact_point,...
     x_contact_normal, y_contact_normal, L, D, spring_constant)
