@@ -412,13 +412,13 @@ IMPORTANT NOTE: THE INERTIAL PROPERTIES ARE NOT CORRECT (PARTICULARLY THE ORIGIN
     </inertial>
     <visual>
       <geometry>
-        <mesh filename="stl/neck.stl" scale="0.849191071429 0.849191071429 0.849191071429"/>
+        <mesh filename="stl/neck.stl" scale="0.480452534562 0.480452534562 0.480452534562"/>
       </geometry>
       <origin rpy="0 0 0" xyz="0 0 0"/>
     </visual>
     <collision>
       <geometry>
-        <mesh filename="stl/neck.stl" scale="0.849191071429 0.849191071429 0.849191071429"/>
+        <mesh filename="stl/neck.stl" scale="0.480452534562 0.480452534562 0.480452534562"/>
       </geometry>
       <origin rpy="0 0 0" xyz="0 0 0"/>
     </collision>
@@ -437,13 +437,13 @@ IMPORTANT NOTE: THE INERTIAL PROPERTIES ARE NOT CORRECT (PARTICULARLY THE ORIGIN
     </inertial>
     <visual>
       <geometry>
-        <mesh filename="stl/head.stl" scale="0.849191071429 0.849191071429 0.849191071429"/>
+        <mesh filename="stl/head.stl" scale="0.934284579936 0.934284579936 0.934284579936"/>
       </geometry>
       <origin rpy="0 0 0" xyz="0 0 0"/>
     </visual>
     <collision>
       <geometry>
-        <mesh filename="stl/head.stl" scale="0.849191071429 0.849191071429 0.849191071429"/>
+        <mesh filename="stl/head.stl" scale="0.934284579936 0.934284579936 0.934284579936"/>
       </geometry>
       <origin rpy="0 0 0" xyz="0 0 0"/>
     </collision>
@@ -451,7 +451,7 @@ IMPORTANT NOTE: THE INERTIAL PROPERTIES ARE NOT CORRECT (PARTICULARLY THE ORIGIN
   <joint name="neck_to_head" type="spherical">
     <parent link="neck"/>
     <child link="head"/>
-    <origin xyz="0 0.04458253125 0"/>
+    <origin xyz="0 0.0252237580645 0"/>
     <dynamics damping="0.0" friction="0.0"/>
   </joint>
   <!--

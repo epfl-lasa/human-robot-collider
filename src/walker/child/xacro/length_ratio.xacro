@@ -17,8 +17,8 @@
     <xacro:property name="pelvis_width_ratio" value="${pelvis_ratio * 0.052/0.04}" />
 
     <!-- Head + Neck -->
-    <xacro:property name="neck_ratio" value="${head_neck_ratio * 0.03/0.16}" />
-    <xacro:property name="head_ratio" value="${head_neck_ratio * 0.13/0.16}" />
+    <xacro:property name="neck_ratio" value="${0.03/0.31 * torso_ratio}" />
+    <xacro:property name="head_ratio" value="${head_neck_ratio - neck_ratio}" />
     
     <!-- Arm -->
     <xacro:property name="arm_ratio"     value="${0.188/0.31 * torso_ratio}" />
