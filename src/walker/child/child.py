@@ -84,7 +84,7 @@ class Child:
 				physicsClientId=pybtPhysicsClient,
 				globalScaling=scaling
 			)
-		self.scaling = scaling
+		self.scaling = scaling * 0.953/1.75
 
 		# pose containers
 		self.global_xyz = np.zeros([3])
