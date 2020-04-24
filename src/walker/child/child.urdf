@@ -412,13 +412,13 @@ IMPORTANT NOTE: THE INERTIAL PROPERTIES ARE NOT CORRECT (PARTICULARLY THE ORIGIN
     </inertial>
     <visual>
       <geometry>
-        <mesh filename="stl/neck.stl" scale="0.544571428571 0.544571428571 0.544571428571"/>
+        <mesh filename="stl/neck.stl" scale="0.849191071429 0.849191071429 0.849191071429"/>
       </geometry>
       <origin rpy="0 0 0" xyz="0 0 0"/>
     </visual>
     <collision>
       <geometry>
-        <mesh filename="stl/neck.stl" scale="0.544571428571 0.544571428571 0.544571428571"/>
+        <mesh filename="stl/neck.stl" scale="0.849191071429 0.849191071429 0.849191071429"/>
       </geometry>
       <origin rpy="0 0 0" xyz="0 0 0"/>
     </collision>
@@ -437,13 +437,13 @@ IMPORTANT NOTE: THE INERTIAL PROPERTIES ARE NOT CORRECT (PARTICULARLY THE ORIGIN
     </inertial>
     <visual>
       <geometry>
-        <mesh filename="stl/head.stl" scale="0.919487912088 0.919487912088 0.919487912088"/>
+        <mesh filename="stl/head.stl" scale="0.849191071429 0.849191071429 0.849191071429"/>
       </geometry>
       <origin rpy="0 0 0" xyz="0 0 0"/>
     </visual>
     <collision>
       <geometry>
-        <mesh filename="stl/head.stl" scale="0.919487912088 0.919487912088 0.919487912088"/>
+        <mesh filename="stl/head.stl" scale="0.849191071429 0.849191071429 0.849191071429"/>
       </geometry>
       <origin rpy="0 0 0" xyz="0 0 0"/>
     </collision>
@@ -451,7 +451,7 @@ IMPORTANT NOTE: THE INERTIAL PROPERTIES ARE NOT CORRECT (PARTICULARLY THE ORIGIN
   <joint name="neck_to_head" type="spherical">
     <parent link="neck"/>
     <child link="head"/>
-    <origin xyz="0 0.02859 0"/>
+    <origin xyz="0 0.04458253125 0"/>
     <dynamics damping="0.0" friction="0.0"/>
   </joint>
   <!--
@@ -465,13 +465,13 @@ IMPORTANT NOTE: THE INERTIAL PROPERTIES ARE NOT CORRECT (PARTICULARLY THE ORIGIN
     </inertial>
     <visual>
       <geometry>
-        <mesh filename="stl/sole_right.stl" scale="1.16086689895 1.16086689895 1.16086689895"/>
+        <mesh filename="stl/sole_right.stl" scale="0.483694541231 0.483694541231 0.483694541231"/>
       </geometry>
       <origin rpy="0 0 0" xyz="0 0 0"/>
     </visual>
     <collision>
       <geometry>
-        <mesh filename="stl/sole_right.stl" scale="1.16086689895 1.16086689895 1.16086689895"/>
+        <mesh filename="stl/sole_right.stl" scale="0.483694541231 0.483694541231 0.483694541231"/>
       </geometry>
       <origin rpy="0 0 0" xyz="0 0 0"/>
     </collision>
@@ -491,13 +491,13 @@ IMPORTANT NOTE: THE INERTIAL PROPERTIES ARE NOT CORRECT (PARTICULARLY THE ORIGIN
     </inertial>
     <visual>
       <geometry>
-        <mesh filename="stl/sole_left.stl" scale="1.16086689895 1.16086689895 1.16086689895"/>
+        <mesh filename="stl/sole_left.stl" scale="0.483694541231 0.483694541231 0.483694541231"/>
       </geometry>
       <origin rpy="0 0 0" xyz="0 0 0"/>
     </visual>
     <collision>
       <geometry>
-        <mesh filename="stl/sole_left.stl" scale="1.16086689895 1.16086689895 1.16086689895"/>
+        <mesh filename="stl/sole_left.stl" scale="0.483694541231 0.483694541231 0.483694541231"/>
       </geometry>
       <origin rpy="0 0 0" xyz="0 0 0"/>
     </collision>
@@ -517,13 +517,13 @@ IMPORTANT NOTE: THE INERTIAL PROPERTIES ARE NOT CORRECT (PARTICULARLY THE ORIGIN
     </inertial>
     <visual>
       <geometry>
-        <mesh filename="stl/toes_right.stl" scale="0.241847270616 0.241847270616 0.241847270616"/>
+        <mesh filename="stl/toes_right.stl" scale="0.483694541231 0.483694541231 0.483694541231"/>
       </geometry>
       <origin rpy="0 0 0" xyz="0 0 0"/>
     </visual>
     <collision>
       <geometry>
-        <mesh filename="stl/toes_right.stl" scale="0.241847270616 0.241847270616 0.241847270616"/>
+        <mesh filename="stl/toes_right.stl" scale="0.483694541231 0.483694541231 0.483694541231"/>
       </geometry>
       <origin rpy="0 0 0" xyz="0 0 0"/>
     </collision>
@@ -543,13 +543,13 @@ IMPORTANT NOTE: THE INERTIAL PROPERTIES ARE NOT CORRECT (PARTICULARLY THE ORIGIN
     </inertial>
     <visual>
       <geometry>
-        <mesh filename="stl/toes_left.stl" scale="0.241847270616 0.241847270616 0.241847270616"/>
+        <mesh filename="stl/toes_left.stl" scale="0.483694541231 0.483694541231 0.483694541231"/>
       </geometry>
       <origin rpy="0 0 0" xyz="0 0 0"/>
     </visual>
     <collision>
       <geometry>
-        <mesh filename="stl/toes_left.stl" scale="0.241847270616 0.241847270616 0.241847270616"/>
+        <mesh filename="stl/toes_left.stl" scale="0.483694541231 0.483694541231 0.483694541231"/>
       </geometry>
       <origin rpy="0 0 0" xyz="0 0 0"/>
     </collision>

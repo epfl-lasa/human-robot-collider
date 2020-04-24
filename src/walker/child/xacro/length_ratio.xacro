@@ -17,8 +17,8 @@
     <xacro:property name="pelvis_width_ratio" value="${pelvis_ratio * 0.052/0.04}" />
 
     <!-- Head + Neck -->
-    <xacro:property name="neck_ratio" value="0.03" />
-    <xacro:property name="head_ratio" value="${head_neck_ratio - neck_ratio}" />
+    <xacro:property name="neck_ratio" value="${head_neck_ratio * 0.03/0.16}" />
+    <xacro:property name="head_ratio" value="${head_neck_ratio * 0.13/0.16}" />
     
     <!-- Arm -->
     <xacro:property name="arm_ratio"     value="0.188" />
@@ -56,8 +56,8 @@
     <xacro:property name="stl_scale_shin" value="${(shin_ratio * height) / (1.75 * 0.246)}" />
     <xacro:property name="stl_scale_foot" value="${(foot_ratio * height) / (1.75 * 0.039)}" />
 
-    <xacro:property name="stl_scale_sole" value="${(sole_ratio * height) / (1.75 * 0.020)}" />
-    <xacro:property name="stl_scale_toes" value="${(toe_ratio  * height) / (1.75 * 0.048)}" />
+    <xacro:property name="stl_scale_sole" value="${(sole_ratio * height) / (1.75 * 0.048)}" />
+    <xacro:property name="stl_scale_toes" value="${(toe_ratio  * height) / (1.75 * 0.024)}" />
 
     <!-- ============================================================================== -->
     <!--    Scale connection points (as [x, y, z])                                      -->
