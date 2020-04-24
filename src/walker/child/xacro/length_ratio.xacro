@@ -21,9 +21,9 @@
     <xacro:property name="head_ratio" value="${head_neck_ratio * 0.13/0.16}" />
     
     <!-- Arm -->
-    <xacro:property name="arm_ratio"     value="0.188" />
-    <xacro:property name="forearm_ratio" value="0.145" />
-    <xacro:property name="hand_ratio"    value="0.108" />
+    <xacro:property name="arm_ratio"     value="${0.188/0.31 * torso_ratio}" />
+    <xacro:property name="forearm_ratio" value="${0.145/0.31 * torso_ratio}" />
+    <xacro:property name="hand_ratio"    value="${0.108/0.31 * torso_ratio}" />
 
     <!-- Foot -->
     <xacro:property name="foot_ratio"       value="${shin_ratio * 0.039/0.246}" />

@@ -260,13 +260,13 @@ IMPORTANT NOTE: THE INERTIAL PROPERTIES ARE NOT CORRECT (PARTICULARLY THE ORIGIN
     </inertial>
     <visual>
       <geometry>
-        <mesh filename="stl/arm_right.stl" scale="0.544571428571 0.544571428571 0.544571428571"/>
+        <mesh filename="stl/arm_right.stl" scale="0.480452534562 0.480452534562 0.480452534562"/>
       </geometry>
       <origin rpy="0 0 0" xyz="0 0 0"/>
     </visual>
     <collision>
       <geometry>
-        <mesh filename="stl/arm_right.stl" scale="0.544571428571 0.544571428571 0.544571428571"/>
+        <mesh filename="stl/arm_right.stl" scale="0.480452534562 0.480452534562 0.480452534562"/>
       </geometry>
       <origin rpy="0 0 0" xyz="0 0 0"/>
     </collision>
@@ -285,13 +285,13 @@ IMPORTANT NOTE: THE INERTIAL PROPERTIES ARE NOT CORRECT (PARTICULARLY THE ORIGIN
     </inertial>
     <visual>
       <geometry>
-        <mesh filename="stl/arm_left.stl" scale="0.544571428571 0.544571428571 0.544571428571"/>
+        <mesh filename="stl/arm_left.stl" scale="0.480452534562 0.480452534562 0.480452534562"/>
       </geometry>
       <origin rpy="0 0 0" xyz="0 0 0"/>
     </visual>
     <collision>
       <geometry>
-        <mesh filename="stl/arm_left.stl" scale="0.544571428571 0.544571428571 0.544571428571"/>
+        <mesh filename="stl/arm_left.stl" scale="0.480452534562 0.480452534562 0.480452534562"/>
       </geometry>
       <origin rpy="0 0 0" xyz="0 0 0"/>
     </collision>
@@ -310,13 +310,13 @@ IMPORTANT NOTE: THE INERTIAL PROPERTIES ARE NOT CORRECT (PARTICULARLY THE ORIGIN
     </inertial>
     <visual>
       <geometry>
-        <mesh filename="stl/arm_lower_right.stl" scale="0.544571428571 0.544571428571 0.544571428571"/>
+        <mesh filename="stl/arm_lower_right.stl" scale="0.480452534562 0.480452534562 0.480452534562"/>
       </geometry>
       <origin rpy="0 0 0" xyz="0 0 0"/>
     </visual>
     <collision>
       <geometry>
-        <mesh filename="stl/arm_lower_right.stl" scale="0.544571428571 0.544571428571 0.544571428571"/>
+        <mesh filename="stl/arm_lower_right.stl" scale="0.480452534562 0.480452534562 0.480452534562"/>
       </geometry>
       <origin rpy="0 0 0" xyz="0 0 0"/>
     </collision>
@@ -325,7 +325,7 @@ IMPORTANT NOTE: THE INERTIAL PROPERTIES ARE NOT CORRECT (PARTICULARLY THE ORIGIN
     <parent link="right_arm"/>
     <child link="right_forearm"/>
     <axis xyz="1 0 0"/>
-    <origin xyz="0 -0.179164 0"/>
+    <origin xyz="0 -0.158068883871 0"/>
     <dynamics damping="0.0" friction="0.0"/>
   </joint>
   <link name="left_forearm">
@@ -336,13 +336,13 @@ IMPORTANT NOTE: THE INERTIAL PROPERTIES ARE NOT CORRECT (PARTICULARLY THE ORIGIN
     </inertial>
     <visual>
       <geometry>
-        <mesh filename="stl/arm_lower_left.stl" scale="0.544571428571 0.544571428571 0.544571428571"/>
+        <mesh filename="stl/arm_lower_left.stl" scale="0.480452534562 0.480452534562 0.480452534562"/>
       </geometry>
       <origin rpy="0 0 0" xyz="0 0 0"/>
     </visual>
     <collision>
       <geometry>
-        <mesh filename="stl/arm_lower_left.stl" scale="0.544571428571 0.544571428571 0.544571428571"/>
+        <mesh filename="stl/arm_lower_left.stl" scale="0.480452534562 0.480452534562 0.480452534562"/>
       </geometry>
       <origin rpy="0 0 0" xyz="0 0 0"/>
     </collision>
@@ -351,7 +351,7 @@ IMPORTANT NOTE: THE INERTIAL PROPERTIES ARE NOT CORRECT (PARTICULARLY THE ORIGIN
     <parent link="left_arm"/>
     <child link="left_forearm"/>
     <axis xyz="1 0 0"/>
-    <origin xyz="0 -0.179164 0"/>
+    <origin xyz="0 -0.158068883871 0"/>
     <dynamics damping="0.0" friction="0.0"/>
   </joint>
   <link name="right_hand">
@@ -362,13 +362,13 @@ IMPORTANT NOTE: THE INERTIAL PROPERTIES ARE NOT CORRECT (PARTICULARLY THE ORIGIN
     </inertial>
     <visual>
       <geometry>
-        <mesh filename="stl/hand_right.stl" scale="0.544571428571 0.544571428571 0.544571428571"/>
+        <mesh filename="stl/hand_right.stl" scale="0.480452534562 0.480452534562 0.480452534562"/>
       </geometry>
       <origin rpy="0 0 0" xyz="0 0 0"/>
     </visual>
     <collision>
       <geometry>
-        <mesh filename="stl/hand_right.stl" scale="0.544571428571 0.544571428571 0.544571428571"/>
+        <mesh filename="stl/hand_right.stl" scale="0.480452534562 0.480452534562 0.480452534562"/>
       </geometry>
       <origin rpy="0 0 0" xyz="0 0 0"/>
     </collision>
@@ -376,7 +376,7 @@ IMPORTANT NOTE: THE INERTIAL PROPERTIES ARE NOT CORRECT (PARTICULARLY THE ORIGIN
   <joint name="right_forearm_to_right_hand" type="spherical">
     <parent link="right_forearm"/>
     <child link="right_hand"/>
-    <origin xyz="0 -0.138185 0"/>
+    <origin xyz="0 -0.121914830645 0"/>
     <dynamics damping="0.0" friction="0.0"/>
   </joint>
   <link name="left_hand">
@@ -387,13 +387,13 @@ IMPORTANT NOTE: THE INERTIAL PROPERTIES ARE NOT CORRECT (PARTICULARLY THE ORIGIN
     </inertial>
     <visual>
       <geometry>
-        <mesh filename="stl/hand_left.stl" scale="0.544571428571 0.544571428571 0.544571428571"/>
+        <mesh filename="stl/hand_left.stl" scale="0.480452534562 0.480452534562 0.480452534562"/>
       </geometry>
       <origin rpy="0 0 0" xyz="0 0 0"/>
     </visual>
     <collision>
       <geometry>
-        <mesh filename="stl/hand_left.stl" scale="0.544571428571 0.544571428571 0.544571428571"/>
+        <mesh filename="stl/hand_left.stl" scale="0.480452534562 0.480452534562 0.480452534562"/>
       </geometry>
       <origin rpy="0 0 0" xyz="0 0 0"/>
     </collision>
@@ -401,7 +401,7 @@ IMPORTANT NOTE: THE INERTIAL PROPERTIES ARE NOT CORRECT (PARTICULARLY THE ORIGIN
   <joint name="left_forearm_to_left_hand" type="spherical">
     <parent link="left_forearm"/>
     <child link="left_hand"/>
-    <origin xyz="0 -0.138185 0"/>
+    <origin xyz="0 -0.121914830645 0"/>
     <dynamics damping="0.0" friction="0.0"/>
   </joint>
   <link name="neck">
