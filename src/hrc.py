@@ -300,7 +300,7 @@ if __name__ == '__main__':
 	else:
 		option_gui = False
 
-	urdf_path = '../data/qolo_and_user_rotated.urdf'
+	urdf_path = 'data/qolo_with_user.urdf'
 	result_name = 'result_phase_1'
 	robot_angle_list = list(np.linspace(0,np.pi*2,16,False))
 	human_angle_list = list(np.linspace(0,np.pi*2,16,False))
