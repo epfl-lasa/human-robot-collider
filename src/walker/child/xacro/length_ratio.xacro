@@ -37,25 +37,10 @@
     <!-- ============================================================================== -->
     <!-- * Scales stl files for desired ratios                                          -->
     <!-- * Scales connection points for desired ratios                                  -->
-    <!--  -->
+
     <!-- ============================================================================== -->
     <!--    Scale stl files                                                             -->
     <!-- ============================================================================== -->
-    <xacro:macro name="read_stl_file" params="filename scale">
-        <visual>
-            <geometry>
-                <mesh filename="${filename}" scale="${scale} ${scale} ${scale}"/>
-            </geometry>
-            <origin rpy="0 0 0" xyz="0 0 0"/>
-        </visual>
-        <collision>
-            <geometry>
-                <mesh filename="${filename}" scale="${scale} ${scale} ${scale}"/>
-            </geometry>
-            <origin rpy="0 0 0" xyz="0 0 0"/>
-        </collision>
-    </xacro:macro>
-
     <xacro:property name="stl_scale_chest"  value="${(chest_ratio * height)  / (1.75 * 0.21)}" />
     <xacro:property name="stl_scale_belly"  value="${(belly_ratio * height)  / (1.75 * 0.06)}" />
     <xacro:property name="stl_scale_pelvis" value="${(pelvis_ratio * height) / (1.75 * 0.04)}" />

@@ -22,6 +22,7 @@ IMPORTANT NOTE: THE INERTIAL PROPERTIES ARE NOT CORRECT (PARTICULARLY THE ORIGIN
 
   <xacro:include filename="mass_ratio.xacro"/>
   <xacro:include filename="length_ratio.xacro"/>
+  <xacro:include filename="macros.xacro"/>
 
   <!-- Chest (Base Link) -->
   <link name="chest">
@@ -52,7 +53,7 @@ IMPORTANT NOTE: THE INERTIAL PROPERTIES ARE NOT CORRECT (PARTICULARLY THE ORIGIN
   <joint name="chest_to_belly" type="spherical">
     <parent link="chest"/>
     <child link="belly"/>
-    <origin xyz="${conn_chest_belly}"/>
+    <xacro:conn_origin conn_name="${conn_chest_belly}"/>
     <dynamics damping="0.0" friction="0.0"/>
   </joint>
 
@@ -69,7 +70,7 @@ IMPORTANT NOTE: THE INERTIAL PROPERTIES ARE NOT CORRECT (PARTICULARLY THE ORIGIN
   <joint name="belly_to_pelvis" type="spherical">
     <parent link="belly"/>
     <child link="pelvis"/>
-    <origin xyz="${conn_belly_pelvis}"/>
+    <xacro:conn_origin conn_name="${conn_belly_pelvis}"/>
     <dynamics damping="0.0" friction="0.0"/>
   </joint>
   
@@ -86,7 +87,7 @@ IMPORTANT NOTE: THE INERTIAL PROPERTIES ARE NOT CORRECT (PARTICULARLY THE ORIGIN
   <joint name="pelvis_to_right_leg" type="spherical">
     <parent link="pelvis"/>
     <child link="right_leg"/>
-    <origin xyz="${conn_pelvis_right_leg}"/>
+    <xacro:conn_origin conn_name="${conn_pelvis_right_leg}"/>
     <dynamics damping="0.0" friction="0.0"/>
   </joint>
 
@@ -103,7 +104,7 @@ IMPORTANT NOTE: THE INERTIAL PROPERTIES ARE NOT CORRECT (PARTICULARLY THE ORIGIN
   <joint name="pelvis_to_left_leg" type="spherical">
     <parent link="pelvis"/>
     <child link="left_leg"/>
-    <origin xyz="${conn_pelvis_left_leg}"/>
+    <xacro:conn_origin conn_name="${conn_pelvis_left_leg}"/>
     <dynamics damping="0.0" friction="0.0"/>
   </joint>
 
@@ -121,7 +122,7 @@ IMPORTANT NOTE: THE INERTIAL PROPERTIES ARE NOT CORRECT (PARTICULARLY THE ORIGIN
     <parent link="right_leg"/>
     <child link="right_shin"/>
     <axis xyz="1 0 0"/>
-    <origin xyz="${conn_leg_shin}"/>
+    <xacro:conn_origin conn_name="${conn_leg_shin}"/>
     <dynamics damping="0.0" friction="0.0"/>
   </joint>
 
@@ -139,7 +140,7 @@ IMPORTANT NOTE: THE INERTIAL PROPERTIES ARE NOT CORRECT (PARTICULARLY THE ORIGIN
     <parent link="left_leg"/>
     <child link="left_shin"/>
     <axis xyz="1 0 0"/>
-    <origin xyz="${conn_leg_shin}"/>
+    <xacro:conn_origin conn_name="${conn_leg_shin}"/>
     <dynamics damping="0.0" friction="0.0"/>
   </joint>
 
@@ -156,7 +157,7 @@ IMPORTANT NOTE: THE INERTIAL PROPERTIES ARE NOT CORRECT (PARTICULARLY THE ORIGIN
   <joint name="right_shin_to_right_foot" type="spherical">
     <parent link="right_shin"/>
     <child link="right_foot"/>
-    <origin xyz="${conn_shin_foot}"/>
+    <xacro:conn_origin conn_name="${conn_shin_foot}"/>
     <dynamics damping="0.0" friction="0.0"/>
   </joint>
 
@@ -173,7 +174,7 @@ IMPORTANT NOTE: THE INERTIAL PROPERTIES ARE NOT CORRECT (PARTICULARLY THE ORIGIN
   <joint name="left_shin_to_left_foot" type="spherical">
     <parent link="left_shin"/>
     <child link="left_foot"/>
-    <origin xyz="${conn_shin_foot}"/>
+    <xacro:conn_origin conn_name="${conn_shin_foot}"/>
     <dynamics damping="0.0" friction="0.0"/>
   </joint>
 
@@ -195,7 +196,7 @@ IMPORTANT NOTE: THE INERTIAL PROPERTIES ARE NOT CORRECT (PARTICULARLY THE ORIGIN
   <joint name="chest_to_right_arm" type="spherical">
     <parent link="chest"/>
     <child link="right_arm"/>
-    <origin xyz="${conn_chest_right_arm}"/>
+    <xacro:conn_origin conn_name="${conn_chest_right_arm}"/>
     <dynamics damping="0.0" friction="0.0"/>
   </joint>
 
@@ -212,7 +213,7 @@ IMPORTANT NOTE: THE INERTIAL PROPERTIES ARE NOT CORRECT (PARTICULARLY THE ORIGIN
   <joint name="chest_to_left_arm" type="spherical">
     <parent link="chest"/>
     <child link="left_arm"/>
-    <origin xyz="${conn_chest_left_arm}"/>
+    <xacro:conn_origin conn_name="${conn_chest_left_arm}"/>
     <dynamics damping="0.0" friction="0.0"/>
   </joint>
 
@@ -230,7 +231,7 @@ IMPORTANT NOTE: THE INERTIAL PROPERTIES ARE NOT CORRECT (PARTICULARLY THE ORIGIN
     <parent link="right_arm"/>
     <child link="right_forearm"/>
     <axis xyz="1 0 0"/>
-    <origin xyz="${conn_arm_forearm}"/>
+    <xacro:conn_origin conn_name="${conn_arm_forearm}"/>
     <dynamics damping="0.0" friction="0.0"/>
   </joint>
 
@@ -248,7 +249,7 @@ IMPORTANT NOTE: THE INERTIAL PROPERTIES ARE NOT CORRECT (PARTICULARLY THE ORIGIN
     <parent link="left_arm"/>
     <child link="left_forearm"/>
     <axis xyz="1 0 0"/>
-    <origin xyz="${conn_arm_forearm}"/>
+    <xacro:conn_origin conn_name="${conn_arm_forearm}"/>
     <dynamics damping="0.0" friction="0.0"/>
   </joint>
 
@@ -265,7 +266,7 @@ IMPORTANT NOTE: THE INERTIAL PROPERTIES ARE NOT CORRECT (PARTICULARLY THE ORIGIN
   <joint name="right_forearm_to_right_hand" type="spherical">
     <parent link="right_forearm"/>
     <child link="right_hand"/>
-    <origin xyz="${conn_forearm_hand}"/>
+    <xacro:conn_origin conn_name="${conn_forearm_hand}"/>
     <dynamics damping="0.0" friction="0.0"/>
   </joint>
 
@@ -282,7 +283,7 @@ IMPORTANT NOTE: THE INERTIAL PROPERTIES ARE NOT CORRECT (PARTICULARLY THE ORIGIN
   <joint name="left_forearm_to_left_hand" type="spherical">
     <parent link="left_forearm"/>
     <child link="left_hand"/>
-    <origin xyz="${conn_forearm_hand}"/>
+    <xacro:conn_origin conn_name="${conn_forearm_hand}"/>
     <dynamics damping="0.0" friction="0.0"/>
   </joint>
 
@@ -299,7 +300,7 @@ IMPORTANT NOTE: THE INERTIAL PROPERTIES ARE NOT CORRECT (PARTICULARLY THE ORIGIN
   <joint name="chest_to_neck" type="spherical">
     <parent link="chest"/>
     <child link="neck"/>
-    <origin xyz="${conn_chest_neck}"/>
+    <xacro:conn_origin conn_name="${conn_chest_neck}"/>
     <dynamics damping="0.0" friction="0.0"/>
   </joint>
 
@@ -316,7 +317,7 @@ IMPORTANT NOTE: THE INERTIAL PROPERTIES ARE NOT CORRECT (PARTICULARLY THE ORIGIN
   <joint name="neck_to_head" type="spherical">
     <parent link="neck"/>
     <child link="head"/>
-    <origin xyz="${conn_neck_head}"/>
+    <xacro:conn_origin conn_name="${conn_neck_head}"/>
     <dynamics damping="0.0" friction="0.0"/>
   </joint>
 
@@ -338,7 +339,7 @@ IMPORTANT NOTE: THE INERTIAL PROPERTIES ARE NOT CORRECT (PARTICULARLY THE ORIGIN
     <parent link="right_foot"/>
     <child link="right_sole"/>
     <axis xyz="0 1 0"/>
-    <origin xyz="${conn_foot_sole}"/>
+    <xacro:conn_origin conn_name="${conn_foot_sole}"/>
     <dynamics damping="0.0" friction="0.0"/>
   </joint>
 
@@ -356,7 +357,7 @@ IMPORTANT NOTE: THE INERTIAL PROPERTIES ARE NOT CORRECT (PARTICULARLY THE ORIGIN
     <parent link="left_foot"/>
     <child link="left_sole"/>
     <axis xyz="0 1 0"/>
-    <origin xyz="${conn_foot_sole}"/>
+    <xacro:conn_origin conn_name="${conn_foot_sole}"/>
     <dynamics damping="0.0" friction="0.0"/>
   </joint>
 
@@ -374,7 +375,7 @@ IMPORTANT NOTE: THE INERTIAL PROPERTIES ARE NOT CORRECT (PARTICULARLY THE ORIGIN
     <parent link="right_sole"/>
     <child link="right_toes"/>
     <axis xyz="1 0 0"/>
-    <origin xyz="${conn_sole_toes}"/>
+    <xacro:conn_origin conn_name="${conn_sole_toes}"/>
     <dynamics damping="0.0" friction="0.0"/>
   </joint>
 
@@ -392,7 +393,7 @@ IMPORTANT NOTE: THE INERTIAL PROPERTIES ARE NOT CORRECT (PARTICULARLY THE ORIGIN
     <parent link="left_sole"/>
     <child link="left_toes"/>
     <axis xyz="1 0 0"/>
-    <origin xyz="${conn_sole_toes}"/>
+    <xacro:conn_origin conn_name="${conn_sole_toes}"/>
     <dynamics damping="0.0" friction="0.0"/>
   </joint>
 

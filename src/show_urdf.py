@@ -33,7 +33,7 @@ def applyMMMRotationToURDFJoint(urdf_body_id, joint_index, rx, ry, rz, inverse=F
 	p.resetJointStateMultiDof(urdf_body_id, joint_index, q)
 
 physicsClient = p.connect(p.GUI)
-human_adult_ID = p.loadURDF("../data/human_adult_shaped.urdf",
+human_adult_ID = p.loadURDF("walker/child/child.urdf",
 	flags=p.URDF_MAINTAIN_LINK_ORDER)
 
 p.resetDebugVisualizerCamera(cameraDistance=3, 

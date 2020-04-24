@@ -17,6 +17,11 @@ Terlemez, Ö., Ulbrich, S., Mandery, C., Do, M., Vahrenkamp, N., & Asfour, T. (2
 IMPORTANT NOTE: THE INERTIAL PROPERTIES ARE NOT CORRECT (PARTICULARLY THE ORIGINS)
 -->
 <robot name="child">
+  <!-- ============================================================================== -->
+  <!-- ========================= DO NOT CHANGE AFTER THIS LINE ====================== -->
+  <!-- ============================================================================== -->
+  <!-- * Scales stl files for desired ratios                                          -->
+  <!-- * Scales connection points for desired ratios                                  -->
   <!-- Chest (Base Link) -->
   <link name="chest">
     <inertial>
@@ -63,7 +68,7 @@ IMPORTANT NOTE: THE INERTIAL PROPERTIES ARE NOT CORRECT (PARTICULARLY THE ORIGIN
   <joint name="chest_to_belly" type="spherical">
     <parent link="chest"/>
     <child link="belly"/>
-    <origin xyz="[0, 0, 0]"/>
+    <origin xyz="0 0 0"/>
     <dynamics damping="0.0" friction="0.0"/>
   </joint>
   <link name="pelvis">
@@ -88,7 +93,7 @@ IMPORTANT NOTE: THE INERTIAL PROPERTIES ARE NOT CORRECT (PARTICULARLY THE ORIGIN
   <joint name="belly_to_pelvis" type="spherical">
     <parent link="belly"/>
     <child link="pelvis"/>
-    <origin xyz="[0, -0.05044751612903226, 0]"/>
+    <origin xyz="0 -0.050447516129 0"/>
     <dynamics damping="0.0" friction="0.0"/>
   </joint>
   <link name="right_leg">
@@ -113,7 +118,7 @@ IMPORTANT NOTE: THE INERTIAL PROPERTIES ARE NOT CORRECT (PARTICULARLY THE ORIGIN
   <joint name="pelvis_to_right_leg" type="spherical">
     <parent link="pelvis"/>
     <child link="right_leg"/>
-    <origin xyz="[-0.043721180645161284, -0.03363167741935484, 0]"/>
+    <origin xyz="-0.0437211806452 -0.0336316774194 0"/>
     <dynamics damping="0.0" friction="0.0"/>
   </joint>
   <link name="left_leg">
@@ -138,7 +143,7 @@ IMPORTANT NOTE: THE INERTIAL PROPERTIES ARE NOT CORRECT (PARTICULARLY THE ORIGIN
   <joint name="pelvis_to_left_leg" type="spherical">
     <parent link="pelvis"/>
     <child link="left_leg"/>
-    <origin xyz="[0.043721180645161284, -0.03363167741935484, 0]"/>
+    <origin xyz="0.0437211806452 -0.0336316774194 0"/>
     <dynamics damping="0.0" friction="0.0"/>
   </joint>
   <link name="right_shin">
@@ -164,7 +169,7 @@ IMPORTANT NOTE: THE INERTIAL PROPERTIES ARE NOT CORRECT (PARTICULARLY THE ORIGIN
     <parent link="right_leg"/>
     <child link="right_shin"/>
     <axis xyz="1 0 0"/>
-    <origin xyz="[0, -0.22586099999999998, 0]"/>
+    <origin xyz="0 -0.225861 0"/>
     <dynamics damping="0.0" friction="0.0"/>
   </joint>
   <link name="left_shin">
@@ -190,7 +195,7 @@ IMPORTANT NOTE: THE INERTIAL PROPERTIES ARE NOT CORRECT (PARTICULARLY THE ORIGIN
     <parent link="left_leg"/>
     <child link="left_shin"/>
     <axis xyz="1 0 0"/>
-    <origin xyz="[0, -0.22586099999999998, 0]"/>
+    <origin xyz="0 -0.225861 0"/>
     <dynamics damping="0.0" friction="0.0"/>
   </joint>
   <link name="right_foot">
@@ -215,7 +220,7 @@ IMPORTANT NOTE: THE INERTIAL PROPERTIES ARE NOT CORRECT (PARTICULARLY THE ORIGIN
   <joint name="right_shin_to_right_foot" type="spherical">
     <parent link="right_shin"/>
     <child link="right_foot"/>
-    <origin xyz="[0, -0.20823049999999999, 0]"/>
+    <origin xyz="0 -0.2082305 0"/>
     <dynamics damping="0.0" friction="0.0"/>
   </joint>
   <link name="left_foot">
@@ -240,7 +245,7 @@ IMPORTANT NOTE: THE INERTIAL PROPERTIES ARE NOT CORRECT (PARTICULARLY THE ORIGIN
   <joint name="left_shin_to_left_foot" type="spherical">
     <parent link="left_shin"/>
     <child link="left_foot"/>
-    <origin xyz="[0, -0.20823049999999999, 0]"/>
+    <origin xyz="0 -0.2082305 0"/>
     <dynamics damping="0.0" friction="0.0"/>
   </joint>
   <!-- 
@@ -269,7 +274,7 @@ IMPORTANT NOTE: THE INERTIAL PROPERTIES ARE NOT CORRECT (PARTICULARLY THE ORIGIN
   <joint name="chest_to_right_arm" type="spherical">
     <parent link="chest"/>
     <child link="right_arm"/>
-    <origin xyz="[-0.0924871129032258, 0.15806888387096776, 0]"/>
+    <origin xyz="-0.0924871129032 0.158068883871 0"/>
     <dynamics damping="0.0" friction="0.0"/>
   </joint>
   <link name="left_arm">
@@ -294,7 +299,7 @@ IMPORTANT NOTE: THE INERTIAL PROPERTIES ARE NOT CORRECT (PARTICULARLY THE ORIGIN
   <joint name="chest_to_left_arm" type="spherical">
     <parent link="chest"/>
     <child link="left_arm"/>
-    <origin xyz="[0.0924871129032258, 0.15806888387096776, 0]"/>
+    <origin xyz="0.0924871129032 0.158068883871 0"/>
     <dynamics damping="0.0" friction="0.0"/>
   </joint>
   <link name="right_forearm">
@@ -320,7 +325,7 @@ IMPORTANT NOTE: THE INERTIAL PROPERTIES ARE NOT CORRECT (PARTICULARLY THE ORIGIN
     <parent link="right_arm"/>
     <child link="right_forearm"/>
     <axis xyz="1 0 0"/>
-    <origin xyz="[0, -0.179164, 0]"/>
+    <origin xyz="0 -0.179164 0"/>
     <dynamics damping="0.0" friction="0.0"/>
   </joint>
   <link name="left_forearm">
@@ -346,7 +351,7 @@ IMPORTANT NOTE: THE INERTIAL PROPERTIES ARE NOT CORRECT (PARTICULARLY THE ORIGIN
     <parent link="left_arm"/>
     <child link="left_forearm"/>
     <axis xyz="1 0 0"/>
-    <origin xyz="[0, -0.179164, 0]"/>
+    <origin xyz="0 -0.179164 0"/>
     <dynamics damping="0.0" friction="0.0"/>
   </joint>
   <link name="right_hand">
@@ -371,7 +376,7 @@ IMPORTANT NOTE: THE INERTIAL PROPERTIES ARE NOT CORRECT (PARTICULARLY THE ORIGIN
   <joint name="right_forearm_to_right_hand" type="spherical">
     <parent link="right_forearm"/>
     <child link="right_hand"/>
-    <origin xyz="[0, -0.13818499999999997, 0]"/>
+    <origin xyz="0 -0.138185 0"/>
     <dynamics damping="0.0" friction="0.0"/>
   </joint>
   <link name="left_hand">
@@ -396,7 +401,7 @@ IMPORTANT NOTE: THE INERTIAL PROPERTIES ARE NOT CORRECT (PARTICULARLY THE ORIGIN
   <joint name="left_forearm_to_left_hand" type="spherical">
     <parent link="left_forearm"/>
     <child link="left_hand"/>
-    <origin xyz="[0, -0.13818499999999997, 0]"/>
+    <origin xyz="0 -0.138185 0"/>
     <dynamics damping="0.0" friction="0.0"/>
   </joint>
   <link name="neck">
@@ -421,7 +426,7 @@ IMPORTANT NOTE: THE INERTIAL PROPERTIES ARE NOT CORRECT (PARTICULARLY THE ORIGIN
   <joint name="chest_to_neck" type="spherical">
     <parent link="chest"/>
     <child link="neck"/>
-    <origin xyz="[0, 0.1765663064516129, 0]"/>
+    <origin xyz="0 0.176566306452 0"/>
     <dynamics damping="0.0" friction="0.0"/>
   </joint>
   <link name="head">
@@ -446,7 +451,7 @@ IMPORTANT NOTE: THE INERTIAL PROPERTIES ARE NOT CORRECT (PARTICULARLY THE ORIGIN
   <joint name="neck_to_head" type="spherical">
     <parent link="neck"/>
     <child link="head"/>
-    <origin xyz="[0, 0.028589999999999997, 0]"/>
+    <origin xyz="0 0.02859 0"/>
     <dynamics damping="0.0" friction="0.0"/>
   </joint>
   <!--
@@ -475,7 +480,7 @@ IMPORTANT NOTE: THE INERTIAL PROPERTIES ARE NOT CORRECT (PARTICULARLY THE ORIGIN
     <parent link="right_foot"/>
     <child link="right_sole"/>
     <axis xyz="0 1 0"/>
-    <origin xyz="[0, -0.03301215243902438, 0.01692930894308943]"/>
+    <origin xyz="0 -0.033012152439 0.0169293089431"/>
     <dynamics damping="0.0" friction="0.0"/>
   </joint>
   <link name="left_sole">
@@ -501,7 +506,7 @@ IMPORTANT NOTE: THE INERTIAL PROPERTIES ARE NOT CORRECT (PARTICULARLY THE ORIGIN
     <parent link="left_foot"/>
     <child link="left_sole"/>
     <axis xyz="0 1 0"/>
-    <origin xyz="[0, -0.03301215243902438, 0.01692930894308943]"/>
+    <origin xyz="0 -0.033012152439 0.0169293089431"/>
     <dynamics damping="0.0" friction="0.0"/>
   </joint>
   <link name="right_toes">
@@ -527,7 +532,7 @@ IMPORTANT NOTE: THE INERTIAL PROPERTIES ARE NOT CORRECT (PARTICULARLY THE ORIGIN
     <parent link="right_sole"/>
     <child link="right_toes"/>
     <axis xyz="1 0 0"/>
-    <origin xyz="[0, 0, 0.040630341463414626]"/>
+    <origin xyz="0 0 0.0406303414634"/>
     <dynamics damping="0.0" friction="0.0"/>
   </joint>
   <link name="left_toes">
@@ -553,7 +558,7 @@ IMPORTANT NOTE: THE INERTIAL PROPERTIES ARE NOT CORRECT (PARTICULARLY THE ORIGIN
     <parent link="left_sole"/>
     <child link="left_toes"/>
     <axis xyz="1 0 0"/>
-    <origin xyz="[0, 0, 0.040630341463414626]"/>
+    <origin xyz="0 0 0.0406303414634"/>
     <dynamics damping="0.0" friction="0.0"/>
   </joint>
 </robot>
