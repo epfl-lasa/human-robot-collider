@@ -95,7 +95,7 @@ def regress_case_4(walker, robot_speed):
 
 
 def case_both_moving_forward(robot_urdf_path, robot_angle_list, human_angle_list, gait_phase_list,
-	human_speed_factor_list, robot_speed_factor_list, walker_scaling, shuffle = False, with_GUI = True):
+	human_speed_factor_list, robot_speed_factor_list, walker_scaling, Human=Man, shuffle = False, with_GUI = True):
 	# define constants for the setup
 	distance = 2.0
 	robot_radius = 0.6
@@ -120,7 +120,7 @@ def case_both_moving_forward(robot_urdf_path, robot_angle_list, human_angle_list
 	shape_data = p.getVisualShapeData(robot_body_id)
 	p.changeVisualShape(robot_body_id, shape_data[0][1], 
 					rgbaColor=[0.4,0.4,0.4, 1])
-	walking_man = Man(physics_client_id, partitioned = True)
+	walking_man = Human(physics_client_id, partitioned = True)
 	
 	if show_GUI:
 		walking_man.setColorForPartitionedCase4()
@@ -291,9 +291,11 @@ if __name__ == '__main__':
 	args = parser.parse_args()
 
 	if args.human == 'child':
-		walker_scaling = 1.0/1.75
+		human = Child
 	else:
-		walker_scaling = 1.0
+		human = Man
+
+	walker_scaling = 1.0
 
 	if args.with_gui == 'gui':
 		option_gui = True
@@ -315,6 +317,7 @@ if __name__ == '__main__':
 		human_speed_factor_list,
 		robot_speed_factor_list,
 		walker_scaling,
+		Human = human,
 		shuffle = False,
 		with_GUI = option_gui)
 

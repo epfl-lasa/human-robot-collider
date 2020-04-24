@@ -98,7 +98,7 @@ class Child:
 		translation_scaling = 0.95 # this is a calibration/scaling of the mocap velocities
 		self.cyclic_joint_positions = np.load(os.path.join(
 			os.path.dirname(__file__),
-			"walk"
+			"walk",
 			"cyclic_joint_positions.npy"
 		))
 		self.cyclic_pelvis_rotations = np.load(os.path.join(
