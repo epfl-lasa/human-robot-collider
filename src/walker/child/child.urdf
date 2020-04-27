@@ -437,13 +437,13 @@ IMPORTANT NOTE: THE INERTIAL PROPERTIES ARE NOT CORRECT (PARTICULARLY THE ORIGIN
     </inertial>
     <visual>
       <geometry>
-        <mesh filename="stl/head_child.stl" scale="0.878989634881 0.878989634881 0.48"/>
+        <mesh filename="stl/head_child.stl" scale="0.878989634881 0.878989634881 0.878989634881"/>
       </geometry>
       <origin rpy="0 0 0" xyz="0 0 0"/>
     </visual>
     <collision>
       <geometry>
-        <mesh filename="stl/head_child.stl" scale="0.878989634881 0.878989634881 0.48"/>
+        <mesh filename="stl/head_child.stl" scale="0.878989634881 0.878989634881 0.878989634881"/>
       </geometry>
       <origin rpy="0 0 0" xyz="0 0 0"/>
     </collision>
