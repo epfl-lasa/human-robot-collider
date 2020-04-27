@@ -5,7 +5,7 @@
     <xacro:property name="leg_ratio" value="0.2370" /> 
     <xacro:property name="shin_ratio" value="0.2185" />
     <xacro:property name="torso_ratio" value="0.2735" />
-    <xacro:property name="head_neck_ratio" value="0.2495" />
+    <xacro:property name="head_neck_ratio" value="0.2363" />
 
     <!-- Torso = Chest + Belly + Pelvis -->
     <xacro:property name="chest_arm_ratio" value="${0.188/0.31 * torso_ratio}" />
