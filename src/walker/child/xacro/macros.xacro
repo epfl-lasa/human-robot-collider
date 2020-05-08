@@ -9,11 +9,13 @@
     <xacro:macro name="read_stl_file"
                  params="filename 
                          scale 
+                         local_proportion:=${list([1,1,1])} 
                          xyz:=${list([0,0,0])} 
                          rpy:=${list([0,0,0])}">
         <visual>
             <geometry>
-                <mesh filename="${filename}" scale="${scale} ${scale} ${scale}"/>
+                <mesh filename="${filename}" 
+                      scale="${scale*local_proportion[0]} ${scale*local_proportion[1]} ${scale*local_proportion[2]}"/>
             </geometry>
             <origin rpy="${rpy[0]} ${rpy[1]} ${rpy[2]}" 
                     xyz="${xyz[0]} ${xyz[1]} ${xyz[2]}"/>
