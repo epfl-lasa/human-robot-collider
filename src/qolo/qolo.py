@@ -32,13 +32,19 @@ class Qolo:
 
 	def set_speed(self, speed):
 		wheel_radius = self.scaling * 0.2
-		self.wheel_speed = speed / (2*math.pi*wheel_radius)
+		self.wheel_speed = speed / (2*math.pi*wheel_radius)/30
 
 	def set_color(self):
 		sdl = p.getVisualShapeData(self.body_id)
+		colors = [
+			[0.7, 0.7, 0.7, 1],	# Main Body
+			[0.4, 0.4, 0.4, 1],	# Left Wheel
+			[0.4, 0.4, 0.4, 1],	# Right Wheel
+			[0.7, 0.7, 0.7, 1],	# Bumper
+		]
 		for i in range(len(sdl)):
 			p.changeVisualShape(self.body_id, sdl[i][1], 
-				rgbaColor=[0.7, 0.7, 0.7, 1])
+								rgbaColor=colors[i])
 
 	def advance(self):
 		self.phase += self.wheel_speed
