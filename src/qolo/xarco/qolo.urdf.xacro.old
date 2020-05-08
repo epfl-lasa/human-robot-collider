@@ -1,0 +1,546 @@
+<?xml version="1.0"?>
+
+<!-- This implements the reference model from
+https://mmm.humanoids.kit.edu/referencemodel.html
+with a height of H = 1.75. This model is based on the one from
+"Biomechanics and motor control of human movement", David A. Winter
+
+This model's additional details (feet), which are implemented here, are given in
+Terlemez, Ö., Ulbrich, S., Mandery, C., Do, M., Vahrenkamp, N., & Asfour, T. (2014, November). Master Motor Map (MMM)—Framework and toolkit for capturing, representing, and reproducing human motion on humanoid robots. In 2014 IEEE-RAS International Conference on Humanoid Robots (pp. 894-901). IEEE.
+
+IMPORTANT NOTE: THE INERTIAL PROPERTIES ARE NOT CORRECT (PARTICULARLY THE ORIGINS)
+-->
+
+<robot name="qolo" xmlns:xacro="https://www.ros.org/wiki/xacro">
+
+	<xacro:include filename="man.urdf.xarco"/>
+
+	<link name="qolo_belt">
+		<inertial>
+			<origin rpy = "0 0 0" xyz = "0 0 0" />
+			<mass value = "0.789101112" />
+			<inertia ixx = "5.0001" ixy = "0" ixz = "0" iyy = "1.0001" iyz = "0" izz = "5.0001" />
+		</inertial>
+
+		<xacro:read_stl_file 
+			filename="stl/qolo_belt.stl"
+			scale="1" 
+			xyz="${[0, -1.16, 0.04]}"  
+			rpy="${[0, pi/2, pi/2]}"
+		/>
+	</link>
+
+	<xacro:joint_macro 
+		parent="belly" 
+		child="qolo_belt" 
+		type="fixed"
+		conn_origin="${[0, 0, 0]}"
+	/>
+	
+	<link name="q1">
+		<inertial>
+			<origin rpy = "0 0 0" xyz = "0 0 0" />
+			<mass value = "0.789101112" />
+			<inertia ixx = "5.0001" ixy = "0" ixz = "0" iyy = "1.0001" iyz = "0" izz = "5.0001" />
+		</inertial>
+
+		<xacro:read_stl_file 
+			filename="stl/q1.stl"
+			scale="1" 
+			xyz="${[0, 0, 0]}" 
+			rpy="${[0, pi/2, pi/2]}"
+		/>
+	</link>
+
+	<xacro:joint_macro 
+		parent="qolo_belt" 
+		child="q1" 
+		type="fixed"
+		conn_origin="${[0, -1.16, 0.04]}"
+	/>
+
+	<link name="q2">
+		<inertial>
+			<origin rpy = "0 0 0" xyz = "0 0 0" />
+			<mass value = "0.789101112" />
+			<inertia ixx = "5.0001" ixy = "0" ixz = "0" iyy = "1.0001" iyz = "0" izz = "5.0001" />
+		</inertial>
+
+		<xacro:read_stl_file 
+			filename="stl/q2.stl"
+			scale="1" 
+			xyz="${[0, 0, 0]}" 
+			rpy="${[0, pi/2, pi/2]}"
+		/>
+	</link>
+
+	<xacro:joint_macro 
+		parent="qolo_belt" 
+		child="q2" 
+		type="fixed"
+		conn_origin="${[0, -1.16, 0.04]}"
+	/>
+
+	<link name="q3">
+		<inertial>
+			<origin rpy = "0 0 0" xyz = "0 0 0" />
+			<mass value = "0.789101112" />
+			<inertia ixx = "5.0001" ixy = "0" ixz = "0" iyy = "1.0001" iyz = "0" izz = "5.0001" />
+		</inertial>
+
+		<xacro:read_stl_file 
+			filename="stl/q3.stl"
+			scale="1" 
+			xyz="${[0, 0, 0]}" 
+			rpy="${[0, pi/2, pi/2]}"
+		/>
+	</link>
+
+	<xacro:joint_macro 
+		parent="qolo_belt" 
+		child="q3" 
+		type="fixed"
+		conn_origin="${[0, -1.16, 0.04]}"
+	/>
+
+	<link name="q4">
+		<inertial>
+			<origin rpy = "0 0 0" xyz = "0 0 0" />
+			<mass value = "0.789101112" />
+			<inertia ixx = "5.0001" ixy = "0" ixz = "0" iyy = "1.0001" iyz = "0" izz = "5.0001" />
+		</inertial>
+
+		<xacro:read_stl_file 
+			filename="stl/q4.stl"
+			scale="1" 
+			xyz="${[0, 0, 0]}" 
+			rpy="${[0, pi/2, pi/2]}"
+		/>
+	</link>
+
+	<xacro:joint_macro 
+		parent="qolo_belt" 
+		child="q4" 
+		type="fixed"
+		conn_origin="${[0, -1.16, 0.04]}"
+	/>
+
+	<link name="q5">
+		<inertial>
+			<origin rpy = "0 0 0" xyz = "0 0 0" />
+			<mass value = "0.789101112" />
+			<inertia ixx = "5.0001" ixy = "0" ixz = "0" iyy = "1.0001" iyz = "0" izz = "5.0001" />
+		</inertial>
+
+		<xacro:read_stl_file 
+			filename="stl/q5.stl"
+			scale="1" 
+			xyz="${[0, 0, 0]}" 
+			rpy="${[0, pi/2, pi/2]}"
+		/>
+	</link>
+
+	<xacro:joint_macro 
+		parent="qolo_belt" 
+		child="q5" 
+		type="fixed"
+		conn_origin="${[0, -1.16, 0.04]}"
+	/>
+	
+	<link name="q6">
+		<inertial>
+			<origin rpy = "0 0 0" xyz = "0 0 0" />
+			<mass value = "0.789101112" />
+			<inertia ixx = "5.0001" ixy = "0" ixz = "0" iyy = "1.0001" iyz = "0" izz = "5.0001" />
+		</inertial>
+
+		<xacro:read_stl_file 
+			filename="stl/q6.stl"
+			scale="1" 
+			xyz="${[0, 0, 0]}" 
+			rpy="${[0, pi/2, pi/2]}"
+		/>
+	</link>
+
+	<xacro:joint_macro 
+		parent="qolo_belt" 
+		child="q6" 
+		type="fixed"
+		conn_origin="${[0, -1.16, 0.04]}"
+	/>
+
+	<link name="q7">
+		<inertial>
+			<origin rpy = "0 0 0" xyz = "0 0 0" />
+			<mass value = "0.789101112" />
+			<inertia ixx = "5.0001" ixy = "0" ixz = "0" iyy = "1.0001" iyz = "0" izz = "5.0001" />
+		</inertial>
+
+		<xacro:read_stl_file 
+			filename="stl/q7.stl"
+			scale="1" 
+			xyz="${[0, 0, 0]}" 
+			rpy="${[0, pi/2, pi/2]}"
+		/>
+	</link>
+
+	<xacro:joint_macro 
+		parent="qolo_belt" 
+		child="q7" 
+		type="fixed"
+		conn_origin="${[0, -1.16, 0.04]}"
+	/>
+
+	<link name="knee_rest">
+		<inertial>
+			<origin rpy = "0 0 0" xyz = "0 0 0" />
+			<mass value = "0.789101112" />
+			<inertia ixx = "5.0001" ixy = "0" ixz = "0" iyy = "1.0001" iyz = "0" izz = "5.0001" />
+		</inertial>
+
+		<xacro:read_stl_file 
+			filename="stl/knee_rest.stl"
+			scale="1" 
+			xyz="${[0, 0, 0]}" 
+			rpy="${[0, pi/2, pi/2]}"
+		/>
+	</link>
+
+	<xacro:joint_macro 
+		parent="qolo_belt" 
+		child="knee_rest" 
+		type="fixed"
+		conn_origin="${[0, -1.16, 0.04]}"
+	/>
+
+	<link name="trunk">
+		<inertial>
+			<origin rpy = "0 0 0" xyz = "0 0 0" />
+			<mass value = "5" />
+			<inertia ixx = "5.0001" ixy = "0" ixz = "0" iyy = "1.0001" iyz = "0" izz = "5.0001" />
+		</inertial>
+
+		<xacro:read_stl_file 
+			filename="stl/trunk.stl"
+			scale="1" 
+			xyz="${[0, 0, 0]}" 
+			rpy="${[0, pi/2, pi/2]}"
+		/>
+	</link>
+
+	<xacro:joint_macro 
+		parent="qolo_belt" 
+		child="trunk" 
+		type="fixed"
+		conn_origin="${[0, -1.16, 0.04]}"
+	/>
+
+	<link name="protection_right">
+		<inertial>
+			<origin rpy = "0 0 0" xyz = "0 0 0" />
+			<mass value = "5" />
+			<inertia ixx = "5.0001" ixy = "0" ixz = "0" iyy = "1.0001" iyz = "0" izz = "5.0001" />
+		</inertial>
+
+		<xacro:read_stl_file 
+			filename="stl/protection_right.stl"
+			scale="1" 
+			xyz="${[0, 0, 0]}" 
+			rpy="${[0, pi/2, pi/2]}"
+		/>
+	</link>
+
+	<xacro:joint_macro 
+		parent="qolo_belt" 
+		child="protection_right" 
+		type="fixed"
+		conn_origin="${[0, -1.16, 0.04]}"
+	/>
+
+	<link name="protection_left">
+		<inertial>
+			<origin rpy = "0 0 0" xyz = "0 0 0" />
+			<mass value = "5" />
+			<inertia ixx = "5.0001" ixy = "0" ixz = "0" iyy = "1.0001" iyz = "0" izz = "5.0001" />
+		</inertial>
+
+		<xacro:read_stl_file 
+			filename="stl/protection_left.stl"
+			scale="1" 
+			xyz="${[0, 0, 0]}" 
+			rpy="${[0, pi/2, pi/2]}"
+		/>
+	</link>
+
+	<xacro:joint_macro 
+		parent="qolo_belt" 
+		child="protection_left" 
+		type="fixed"
+		conn_origin="${[0, -1.16, 0.04]}"
+	/>
+
+	<link name="q12">
+		<inertial>
+			<origin rpy = "0 0 0" xyz = "0 0 0" />
+			<mass value = "0.789101112" />
+			<inertia ixx = "5.0001" ixy = "0" ixz = "0" iyy = "1.0001" iyz = "0" izz = "5.0001" />
+		</inertial>
+
+		<xacro:read_stl_file 
+			filename="stl/q12.stl"
+			scale="1" 
+			xyz="${[0, 0, 0]}" 
+			rpy="${[0, pi/2, pi/2]}"
+		/>
+	</link>
+
+	<xacro:joint_macro 
+		parent="qolo_belt" 
+		child="q12" 
+		type="fixed"
+		conn_origin="${[0, -1.16, 0.04]}"
+	/>
+
+	<link name="q13">
+		<inertial>
+			<origin rpy = "0 0 0" xyz = "0 0 0" />
+			<mass value = "0.789101112" />
+			<inertia ixx = "5.0001" ixy = "0" ixz = "0" iyy = "1.0001" iyz = "0" izz = "5.0001" />
+		</inertial>
+
+		<xacro:read_stl_file 
+			filename="stl/q13.stl"
+			scale="1" 
+			xyz="${[0, 0, 0]}" 
+			rpy="${[0, pi/2, pi/2]}"
+		/>
+	</link>
+
+	<xacro:joint_macro 
+		parent="qolo_belt" 
+		child="q13" 
+		type="fixed"
+		conn_origin="${[0, -1.16, 0.04]}"
+	/>
+
+	<link name="q16">
+		<inertial>
+			<origin rpy = "0 0 0" xyz = "0 0 0" />
+			<mass value = "0.789101112" />
+			<inertia ixx = "5.0001" ixy = "0" ixz = "0" iyy = "1.0001" iyz = "0" izz = "5.0001" />
+		</inertial>
+
+		<xacro:read_stl_file 
+			filename="stl/q16.stl"
+			scale="1" 
+			xyz="${[0, 0, 0]}" 
+			rpy="${[0, pi/2, pi/2]}"
+		/>
+	</link>
+
+	<xacro:joint_macro 
+		parent="qolo_belt" 
+		child="q16" 
+		type="fixed"
+		conn_origin="${[0, -1.16, 0.04]}"
+	/>
+
+	<link name="q17">
+		<inertial>
+			<origin rpy = "0 0 0" xyz = "0 0 0" />
+			<mass value = "0.789101112" />
+			<inertia ixx = "5.0001" ixy = "0" ixz = "0" iyy = "1.0001" iyz = "0" izz = "5.0001" />
+		</inertial>
+
+		<xacro:read_stl_file 
+			filename="stl/q17.stl"
+			scale="1" 
+			xyz="${[0, 0, 0]}" 
+			rpy="${[0, pi/2, pi/2]}"
+		/>
+	</link>
+
+	<xacro:joint_macro 
+		parent="qolo_belt" 
+		child="q17" 
+		type="fixed"
+		conn_origin="${[0, -1.16, 0.04]}"
+	/>
+
+	<link name="q18">
+		<inertial>
+			<origin rpy = "0 0 0" xyz = "0 0 0" />
+			<mass value = "0.789101112" />
+			<inertia ixx = "5.0001" ixy = "0" ixz = "0" iyy = "1.0001" iyz = "0" izz = "5.0001" />
+		</inertial>
+
+		<xacro:read_stl_file 
+			filename="stl/q18.stl"
+			scale="1" 
+			xyz="${[0, 0, 0]}" 
+			rpy="${[0, pi/2, pi/2]}"
+		/>
+	</link>
+
+	<xacro:joint_macro 
+		parent="qolo_belt" 
+		child="q18" 
+		type="fixed"
+		conn_origin="${[0, -1.16, 0.04]}"
+	/>
+
+	<link name="q19">
+		<inertial>
+			<origin rpy = "0 0 0" xyz = "0 0 0" />
+			<mass value = "0.789101112" />
+			<inertia ixx = "5.0001" ixy = "0" ixz = "0" iyy = "1.0001" iyz = "0" izz = "5.0001" />
+		</inertial>
+
+		<xacro:read_stl_file 
+			filename="stl/q19.stl"
+			scale="1" 
+			xyz="${[0, 0, 0]}" 
+			rpy="${[0, pi/2, pi/2]}"
+		/>
+	</link>
+
+	<xacro:joint_macro 
+		parent="qolo_belt" 
+		child="q19" 
+		type="fixed"
+		conn_origin="${[0, -1.16, 0.04]}"
+	/>
+
+	<link name="q20">
+		<inertial>
+			<origin rpy = "0 0 0" xyz = "0 0 0" />
+			<mass value = "0.789101112" />
+			<inertia ixx = "5.0001" ixy = "0" ixz = "0" iyy = "1.0001" iyz = "0" izz = "5.0001" />
+		</inertial>
+
+		<xacro:read_stl_file 
+			filename="stl/q20.stl"
+			scale="1" 
+			xyz="${[0, 0, 0]}" 
+			rpy="${[0, pi/2, pi/2]}"
+		/>
+	</link>
+
+	<xacro:joint_macro 
+		parent="qolo_belt" 
+		child="q20" 
+		type="fixed"
+		conn_origin="${[0, -1.16, 0.04]}"
+	/>
+
+	<link name="q21">
+		<inertial>
+			<origin rpy = "0 0 0" xyz = "0 0 0" />
+			<mass value = "0.789101112" />
+			<inertia ixx = "5.0001" ixy = "0" ixz = "0" iyy = "1.0001" iyz = "0" izz = "5.0001" />
+		</inertial>
+
+		<xacro:read_stl_file 
+			filename="stl/q21.stl"
+			scale="1" 
+			xyz="${[0, 0, 0]}" 
+			rpy="${[0, pi/2, pi/2]}"
+		/>
+	</link>
+
+	<xacro:joint_macro 
+		parent="qolo_belt" 
+		child="q21" 
+		type="fixed"
+		conn_origin="${[0, -1.16, 0.04]}"
+	/>
+
+	<link name="q22">
+		<inertial>
+			<origin rpy = "0 0 0" xyz = "0 0 0" />
+			<mass value = "0.789101112" />
+			<inertia ixx = "5.0001" ixy = "0" ixz = "0" iyy = "1.0001" iyz = "0" izz = "5.0001" />
+		</inertial>
+
+		<xacro:read_stl_file 
+			filename="stl/q22.stl"
+			scale="1" 
+			xyz="${[0, 0, 0]}" 
+			rpy="${[0, pi/2, pi/2]}"
+		/>
+	</link>
+
+	<xacro:joint_macro 
+		parent="qolo_belt" 
+		child="q22" 
+		type="fixed"
+		conn_origin="${[0, -1.16, 0.04]}"
+	/>
+
+	<link name="q23">
+		<inertial>
+			<origin rpy = "0 0 0" xyz = "0 0 0" />
+			<mass value = "0.789101112" />
+			<inertia ixx = "5.0001" ixy = "0" ixz = "0" iyy = "1.0001" iyz = "0" izz = "5.0001" />
+		</inertial>
+
+		<xacro:read_stl_file 
+			filename="stl/q23.stl"
+			scale="1" 
+			xyz="${[0, 0, 0]}" 
+			rpy="${[0, pi/2, pi/2]}"
+		/>
+	</link>
+
+	<xacro:joint_macro 
+		parent="qolo_belt" 
+		child="q23" 
+		type="fixed"
+		conn_origin="${[0, -1.16, 0.04]}"
+	/>
+
+	<link name="q24">
+		<inertial>
+			<origin rpy = "0 0 0" xyz = "0 0 0" />
+			<mass value = "0.789101112" />
+			<inertia ixx = "5.0001" ixy = "0" ixz = "0" iyy = "1.0001" iyz = "0" izz = "5.0001" />
+		</inertial>
+
+		<xacro:read_stl_file 
+			filename="stl/q24.stl"
+			scale="1" 
+			xyz="${[0, 0, 0]}" 
+			rpy="${[0, pi/2, pi/2]}"
+		/>
+	</link>
+
+	<xacro:joint_macro 
+		parent="qolo_belt" 
+		child="q24" 
+		type="fixed"
+		conn_origin="${[0, -1.16, 0.04]}"
+	/>
+
+	<link name="q25">
+		<inertial>
+			<origin rpy = "0 0 0" xyz = "0 0 0" />
+			<mass value = "0.789101112" />
+			<inertia ixx = "5.0001" ixy = "0" ixz = "0" iyy = "1.0001" iyz = "0" izz = "5.0001" />
+		</inertial>
+
+		<xacro:read_stl_file 
+			filename="stl/q25.stl"
+			scale="1" 
+			xyz="${[0, 0, 0]}" 
+			rpy="${[0, pi/2, pi/2]}"
+		/>
+	</link>
+
+	<xacro:joint_macro 
+		parent="qolo_belt" 
+		child="q25" 
+		type="fixed"
+		conn_origin="${[0, -1.16, 0.04]}"
+	/>
+
+</robot>

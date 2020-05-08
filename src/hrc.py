@@ -5,7 +5,7 @@ import numpy as np
 import scipy.io as sio
 
 from walker import *
-
+from qolo import *
 
 class SphericalHighlight():
 	def __init__(self, n_spheres, r_min, r_max, duration, physics_client_id):
@@ -116,11 +116,12 @@ def case_both_moving_forward(robot_urdf_path, robot_angle_list, human_angle_list
 		physics_client_id = p.connect(p.DIRECT)
 	else:
 		physics_client_id = p.connect(p.GUI)
-	robot_body_id = p.loadURDF(robot_urdf_path, useFixedBase = 1)
-	shape_data = p.getVisualShapeData(robot_body_id)
-	p.changeVisualShape(robot_body_id, shape_data[0][1], 
-					rgbaColor=[0.4,0.4,0.4, 1])
-	walking_man = Human(physics_client_id, partitioned = True)
+	# robot_body_id = p.loadURDF(robot_urdf_path, useFixedBase = 1)
+	# shape_data = p.getVisualShapeData(robot_body_id)
+	# p.changeVisualShape(robot_body_id, shape_data[0][1], 
+	# 				rgbaColor=[0.4,0.4,0.4, 1])
+	robot = Qolo(physics_client_id, fixedBase=1)
+	walking_man = Human(physics_client_id, partitioned=True)
 	
 	if show_GUI:
 		walking_man.setColorForPartitionedCase4()
@@ -177,6 +178,8 @@ def case_both_moving_forward(robot_urdf_path, robot_angle_list, human_angle_list
 						relative_velocity = human_velocity - robot_velocity
 						relative_speed = np.sqrt(np.dot(relative_velocity, relative_velocity))
 						angle_relative_v = pos_atan(relative_velocity[1], relative_velocity[0])
+
+						robot.set_speed(robot_speed)
 						if (relative_speed > (distance -human_radius-robot_radius)/t_max) and (
 							miss_angle_lower_threshold < angle_relative_v) and (
 							miss_angle_upper_threshold > angle_relative_v):
@@ -187,10 +190,11 @@ def case_both_moving_forward(robot_urdf_path, robot_angle_list, human_angle_list
 							reset_walker_case_4(walking_man, distance, robot_angle, human_angle, gait_phase)
 							while collision_free and not time_out:
 								advance_case_4(walking_man, robot_speed)
+								robot.advance()
 
 								p.stepSimulation()
 								contact_points = p.getContactPoints(walking_man.body_id,
-									robot_body_id)
+									robot.body_id)
 
 								for cp in contact_points:
 									if cp[8] <= 0.0:
