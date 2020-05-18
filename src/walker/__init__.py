@@ -9,5 +9,6 @@ __author__ = 'Vaibhav Gupta'
 
 
 # Exports
+from .human import Human
 from .man.man import Man
 from .child.child import Child
