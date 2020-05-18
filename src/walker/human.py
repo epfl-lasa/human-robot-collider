@@ -163,24 +163,28 @@ class Human:
 
         self.__apply_pose()
 
-    def advance(self, global_xyz, global_rpy):
-        self.global_xyz = self.initial_xyz + global_xyz
-        self.global_rpy = self.initial_rpy + global_rpy
-        
-        self.other_xyz[:] += self.cyclic_pelvis_forward_velocity[self.gait_phase_step]*0.01
+    def advance(self, global_xyz, global_rpy, no_motion=False):
+        if not no_motion:
+            self.global_xyz = self.initial_xyz + global_xyz
+            self.global_rpy = self.initial_rpy + global_rpy
 
-        self.gait_phase_step += 1
-        if self.gait_phase_step == np.size(self.cycle_time_steps):
-            self.gait_phase_step = 0
+            self.other_xyz[:] += self.cyclic_pelvis_forward_velocity[self.gait_phase_step]*self.timestep
 
-        self.other_xyz[1] = self.cyclic_pelvis_lateral_position[self.gait_phase_step]
-        self.other_xyz[2] = self.cyclic_pelvis_vertical_position[self.gait_phase_step]
+            self.gait_phase_step += 1
+            if self.gait_phase_step == np.size(self.cycle_time_steps):
+                self.gait_phase_step = 0
 
-        self.other_rpy[:] = self.cyclic_pelvis_rotations[:, self.gait_phase_step]
+            self.other_xyz[1] = self.cyclic_pelvis_lateral_position[self.gait_phase_step]
+            self.other_xyz[2] = self.cyclic_pelvis_vertical_position[self.gait_phase_step]
 
-        self.joint_positions[:] = self.cyclic_joint_positions[:, self.gait_phase_step]
+            self.other_rpy[:] = self.cyclic_pelvis_rotations[:, self.gait_phase_step]
+
+            self.joint_positions[:] = self.cyclic_joint_positions[:, self.gait_phase_step]
 
         self.__apply_pose()
+
+    def fix(self):
+        self.advance(0, 0, no_motion=True)
 
     def regress(self):
         self.other_xyz[:] -= self.cyclic_pelvis_forward_velocity[self.gait_phase_step]*0.01

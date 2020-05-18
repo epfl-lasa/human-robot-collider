@@ -1,11 +1,13 @@
-import argparse, time
+import argparse, time, os
 
 import pybullet as p
+import pybullet_data
 import numpy as np
 import scipy.io as sio
 
 from walker import *
 from qolo import *
+from collision import *
 
 class SphericalHighlight():
 	def __init__(self, n_spheres, r_min, r_max, duration, physics_client_id):
@@ -32,15 +34,6 @@ class SphericalHighlight():
 				p.resetBasePositionAndOrientation(self.list_of_spheres[sphere_index],
 					actual_target_position,[0,0,0,1])
 				time.sleep(float(self.duration)/len(self.list_of_spheres)/2.0)
-
-
-def rotate_by_quaternion(vec3, q):
-	R = p.getMatrixFromQuaternion(q)
-	result = [
-		R[0]*vec3[0] + R[1]*vec3[1] + R[2]*vec3[2],
-		R[3]*vec3[0] + R[4]*vec3[1] + R[5]*vec3[2],
-		R[6]*vec3[0] + R[7]*vec3[1] + R[8]*vec3[2]]
-	return result
 
 
 def rotate_by_inverse_of_quaternion(vec3, q):
@@ -76,26 +69,47 @@ def pos_atan(y,x):
 	return a
 
 
+class Ground:
+	def __init__(self,
+				 pybtPhysicsClient,
+				 urdf_path=os.path.join(pybullet_data.getDataPath(), "plane.urdf")):
+		self.id = p.loadURDF(
+			urdf_path,
+            physicsClientId=pybtPhysicsClient,
+		)
+
+	def advance(self, global_xyz, global_rpy):
+		p.resetBasePositionAndOrientation(
+			self.id,
+			global_xyz,
+			p.getQuaternionFromEuler(global_rpy)
+		)
+
+
 def reset_walker_case_4(walker, distance, robot_angle, human_angle, gait_phase):
 	x = distance*np.cos(-np.pi/2-robot_angle)
 	y = distance*np.sin(-np.pi/2-robot_angle)
 	orientation = -np.pi/2-robot_angle + human_angle
-	walker.resetGlobalTransformation([x,y,0.94*walker.scaling],[0,0, orientation-np.pi/2])
-	walker.setGaitPhase(gait_phase)
+	walker.resetGlobalTransformation(
+		xyz=np.array([x, y, 0.94*walker.scaling]),
+		rpy=np.array([0, 0, orientation-np.pi/2]),
+		gait_phase_value=0
+	)
 
 
-def advance_case_4(walker, robot_speed):
-	walker.global_xyz += 0.01*np.array([0.0, robot_speed, 0.0])
-	walker.advance()
-
-
-def regress_case_4(walker, robot_speed):
-	walker.global_xyz += 0.01*np.array([0.0, -robot_speed, 0.0])
-	walker.regress()
-
-
-def case_both_moving_forward(robot_urdf_path, robot_angle_list, human_angle_list, gait_phase_list,
-	human_speed_factor_list, robot_speed_factor_list, walker_scaling, Human=Man, shuffle = False, with_GUI = True):
+def case_both_moving_forward(
+		robot_urdf_path,
+		robot_angle_list,
+		human_angle_list,
+		gait_phase_list,
+		human_speed_factor_list,
+		robot_speed_factor_list,
+		walker_scaling,
+		Human=Man,
+		shuffle=False,
+		with_GUI=True,
+		timestep=0.01,
+	):
 	# define constants for the setup
 	distance = 2.0
 	robot_radius = 0.6
@@ -120,40 +134,18 @@ def case_both_moving_forward(robot_urdf_path, robot_angle_list, human_angle_list
 	# shape_data = p.getVisualShapeData(robot_body_id)
 	# p.changeVisualShape(robot_body_id, shape_data[0][1], 
 	# 				rgbaColor=[0.4,0.4,0.4, 1])
-	robot = Qolo(physics_client_id, fixedBase=1)
-	walking_man = Human(physics_client_id, partitioned=True)
+	robot = Qolo(physics_client_id, fixedBase=1, timestep=timestep)
+	human = Human(physics_client_id, partitioned=True, timestep=timestep)
+	collider = Collision(physics_client_id, robot_body_id=robot.body_id, human_body_id=human.body_id)
 	
 	if show_GUI:
-		walking_man.setColorForPartitionedCase4()
+		human.setColor()
 		p.configureDebugVisualizer(p.COV_ENABLE_GUI,0)
-		p.resetDebugVisualizerCamera(1.7,-30,-5,[0,0,0.8])
+		p.resetDebugVisualizerCamera(1.7, -30, -5, [0, 0, 0.8], physics_client_id)
 		hl = SphericalHighlight(30, 0.003, 0.3, 2.5, physics_client_id)
+		ground = Ground(physics_client_id, os.path.join(pybullet_data.getDataPath(), "plane.urdf"))
 		#if make_video:
 		#	p.startStateLogging( p.STATE_LOGGING_VIDEO_MP4, 'video_hrc.mp4' )
-
-	show_one_box = True
-	if (show_one_box and show_GUI):
-		colBoxId = p.createCollisionShape(p.GEOM_BOX, halfExtents = [50,50,50])
-		box_id = p.createMultiBody(0, colBoxId, -1, [0, 0, -50], [0,0,0,1])
-		shape_data = p.getVisualShapeData(box_id)
-		p.changeVisualShape(box_id, shape_data[0][1], 
-					rgbaColor=[0.7,0.7,0.7, 1])
-
-	show_boxes = False
-	if (show_boxes and show_GUI):
-		colBoxIds = []
-		thickness = 4.0
-		shape_id = p.createCollisionShape(p.GEOM_BOX, halfExtents = [10,thickness/2,5])
-		n_boxes = 100
-		start_y = -100.0
-		for i in range(n_boxes):
-			box_id = p.createMultiBody(0, shape_id, -1,
-				[0, start_y + i*thickness, -5], [0, 0, 0, 1])
-			shape_data = p.getVisualShapeData(box_id)
-			p.changeVisualShape(box_id, shape_data[0][1], 
-					rgbaColor=[i % 2,i % 2,i % 2, 1])
-
-			colBoxIds.append(box_id)
 
 	# initialize the container for the results of all the iterations
 	# [iteration_number, link_1_index, link_2_index, point1-x,-y,-z, point2-x,-y,-z, velocity-point1-x,-y,-z, contact_normal_2_to_1-x,-y,-z, robot_speed, robot_angle, human_angle, initial_gait_phase, walker_scaling, point_A_link_local-x,-y,-z]
@@ -179,85 +171,40 @@ def case_both_moving_forward(robot_urdf_path, robot_angle_list, human_angle_list
 						relative_speed = np.sqrt(np.dot(relative_velocity, relative_velocity))
 						angle_relative_v = pos_atan(relative_velocity[1], relative_velocity[0])
 
-						robot.set_speed(robot_speed)
+						robot.set_speed(robot_speed, 0)
+						robot.reset()
 						if (relative_speed > (distance -human_radius-robot_radius)/t_max) and (
 							miss_angle_lower_threshold < angle_relative_v) and (
 							miss_angle_upper_threshold > angle_relative_v):
 
 							ti = 0
 							collision_free = True
+							collision_free_ = True
 							time_out = False
-							reset_walker_case_4(walking_man, distance, robot_angle, human_angle, gait_phase)
+							reset_walker_case_4(human, distance, robot_angle, human_angle, gait_phase)
+							ground_loc = np.zeros(2)
 							while collision_free and not time_out:
-								advance_case_4(walking_man, robot_speed)
 								robot.advance()
+								if collision_free_:
+									human.advance(-robot.global_xyz, -robot.global_rpy)
+								else:
+									human.fix()
+								ground.advance(-robot.global_xyz, -robot.global_rpy)
 
 								p.stepSimulation()
-								contact_points = p.getContactPoints(walking_man.body_id,
-									robot.body_id)
-
-								for cp in contact_points:
-									if cp[8] <= 0.0:
-										collision_free = False
-										last_collision_point = cp[5] 
-										point_A_link_local = get_link_local_coordinates(walking_man.body_id, cp[3], cp[5])
-										# compute the velocity of the contact point on the human via finite differences
-										# 1) Get the point in link-local coordinates
-										link_state = getLinkOrBaseState(walking_man.body_id, cp[3])
-
-										p1_local = rotate_by_inverse_of_quaternion(np.array(cp[5])-np.array(link_state[4]), 
-											link_state[5])
-										# 2) Keep the local coordinates constant while advancing and regressing
-										#    and compute the resulting world coordinates
-										advance_case_4(walking_man, robot_speed)
-
-										link_state = getLinkOrBaseState(walking_man.body_id, cp[3])
-										p1_global_future = np.array(link_state[4]) + np.array(rotate_by_quaternion(p1_local, link_state[5]))
-
-										regress_case_4(walking_man, robot_speed)
-										regress_case_4(walking_man, robot_speed)
-
-										link_state = getLinkOrBaseState(walking_man.body_id, cp[3])
-										p1_global_past = np.array(link_state[4]) + np.array(rotate_by_quaternion(p1_local, link_state[5]))
-										
-										advance_case_4(walking_man, robot_speed)
-
-										# 3) compute the velocity via finite differences assuming a timestep of 0.01
-										velocity = (p1_global_future - p1_global_past)/0.02
-
-										result = np.append(result, np.array([[
-											iteration_number,
-											cp[3],
-											cp[4],
-											cp[5][0],
-											cp[5][1],
-											cp[5][2],
-											cp[6][0],
-											cp[6][1],
-											cp[6][2],
-											velocity[0],
-											velocity[1],
-											velocity[2],
-											cp[7][0],
-											cp[7][1],
-											cp[7][2],
-											robot_speed,
-											robot_angle,
-											human_angle,
-											gait_phase,
-											walker_scaling,
-											point_A_link_local[0],
-											point_A_link_local[1],
-											point_A_link_local[2]]]), 0)
+								
+								(F, h, theta) = collider.get_collision_stat()
+								if F is not None:
+									# last_collision_point = theta
+									# collision_free = False
+									print((F, h, theta))
+									# robot.set_speed(0, 0)
+									collision_free_= False
+	
 								ti += 1
 								if ti > int(t_max/0.01):
 									time_out = True
 
-								if (show_boxes and show_GUI):
-									for i in range(n_boxes):
-										pos, ori = p.getBasePositionAndOrientation(colBoxIds[i])
-										p.resetBasePositionAndOrientation(colBoxIds[i],
-											np.array(pos) + np.array([0,robot_speed*0.01,0]), ori)
 								if show_GUI and not fast_forward:
 									time.sleep(0.01)
 							if time_out and collision_free:
@@ -280,14 +227,16 @@ if __name__ == '__main__':
 		description = 'Computes contact points between a walking human and the standing mobility device Qolo driving forward.')
 
 	parser.add_argument(
-		'human',
+		'--human',
 		choices=['adult','child'],
+		default='adult',
 		help='Human to collide with Qolo.'
 	)
 
 	parser.add_argument(
-		'with_gui',
+		'--with_gui',
 		choices=['gui','no_gui'],
+		default='gui',
 		help="""The option allows to display the collisions in a GUI or 
 			  to quickly simulate all the collisions without showing them."""
 	)
