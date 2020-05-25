@@ -6,7 +6,7 @@ from . import Controller
 class AdmittanceController(Controller):    
     def __init__(self,
                  damping_gain=1,
-                 robot_mass=54.5,
+                 robot_mass=54.5, 
                  **kwargs):
         super().__init__(**kwargs)
         self.damping_gain = damping_gain

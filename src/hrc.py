@@ -73,9 +73,11 @@ def case_both_moving_forward(
 		walker_scaling=1.0,
 		show_GUI=True,
 		timestep=0.01,
+		collision_timestep=0.001,
 		make_video=False,
 		fast_forward=False,
 	):
+	delay_timestep = timestep
 	# define constants for the setup
 	distance = 2.0
 	robot_radius = 0.6
@@ -129,6 +131,7 @@ def case_both_moving_forward(
 	t = 0
 	reset_walker_case_4(human, distance, robot_angle, human_angle, gait_phase)
 	collision_forces = []
+	robot_target_velocities = []
 	while t < t_max:
 		robot.advance()
 		xyz, quaternion = p.invertTransform(robot.global_xyz, robot.global_quaternion)								
@@ -147,7 +150,14 @@ def case_both_moving_forward(
 				F=F
 			)
 			robot.set_speed(v, omega)
+			robot_target_velocities.append([robot.v, robot.omega])
 			human.fix()
+
+			# Update timesteps
+			robot.timestep = collision_timestep
+			human.timestep = collision_timestep
+			controller.timestep = collision_timestep
+			delay_timestep = collision_timestep
 		else:
 			if len(collision_forces) > 0:
 				break
@@ -156,14 +166,43 @@ def case_both_moving_forward(
 		t += timestep
 
 		if show_GUI and not fast_forward:
-			time.sleep(timestep)
+			time.sleep(delay_timestep)
 
 	p.disconnect()
 	collision_forces = np.array(collision_forces)
-	
+	robot_target_velocities = np.array(robot_target_velocities)
+
 	if show_GUI:
-		plt.plot(np.linalg.norm(collision_forces[:,0:2],axis=1))
+		f, ax = plt.subplots(1, 2, sharex=True)
+		
+		ax[0].plot(
+			np.arange(collision_forces.shape[0])*collision_timestep,
+			np.linalg.norm(collision_forces[:,0:2], axis=1)
+		)
+		ax[0].set_xlabel("Time [s]")
+		ax[0].set_ylabel("Force [s]")
+		
+		ax[1].plot(
+			np.arange(collision_forces.shape[0])*collision_timestep,
+			robot_target_velocities[:,0],
+			color=(0, 0.4470, 0.7410, 1)
+		)
+		ax[1].set_xlabel("Time [s]")
+		ax[1].set_ylabel("V [m.s]", color=(0, 0.4470, 0.7410, 1))
+		ax[1].tick_params(axis='y', labelcolor=(0, 0.4470, 0.7410, 1))
+
+		ax_ = ax[1].twinx()
+		ax_.plot(
+			np.arange(collision_forces.shape[0])*collision_timestep,
+			robot_target_velocities[:,1],
+			color=(0.8500, 0.3250, 0.0980, 1)
+		)
+		ax_.set_ylabel("Omega [rad/s]", color=(0.8500, 0.3250, 0.0980, 1))
+		ax_.tick_params(axis='y', labelcolor=(0.8500, 0.3250, 0.0980, 1))
+		
+		plt.tight_layout()
 		plt.show()
+
 
 	return collision_forces
 
