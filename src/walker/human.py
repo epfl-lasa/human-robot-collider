@@ -56,6 +56,7 @@ class Human:
             translation_scaling=0.95,   # this is a calibration/scaling of the mocap velocities
         ):
         self.scaling = scaling
+        self.setColor()
 
         # Timestep
         self.timestep = timestep

@@ -4,6 +4,10 @@ import pybullet as p
 import numpy as np
 
 
+V_MAX = 1.5
+OMEGA_MAX = 1.0
+
+
 class Qolo:
 	"""Class for QOLO Robot
 	"""
@@ -42,8 +46,8 @@ class Qolo:
 		self.timestep = timestep
 
 	def set_speed(self, v, omega):
-		self.v = v
-		self.omega = omega
+		self.v = np.clip(v, -V_MAX, V_MAX)
+		self.omega = np.clip(omega, -OMEGA_MAX, OMEGA_MAX)
 
 		wheel_radius = self.scaling * 0.2
 		half_width = self.scaling * 0.545/2

@@ -3,10 +3,12 @@
 This module implements various controllers
 """
 
-__all__ = []
+__all__ = ["NoControl", "AdmittanceController"]
 __version__ = '0.1'
 __author__ = 'Vaibhav Gupta'
 
 
 # Exports
-# from .collision import Collision
+from .controller import Controller
+from .no_control import NoControl
+from .admittance_controller import AdmittanceController

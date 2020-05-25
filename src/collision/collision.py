@@ -98,10 +98,17 @@ class Collision:
                 
                 self.__collide(robot_part_id, human_part_id)
 
-                F = self.__get_contact_force(contact_point[8])
+                Fmag = self.__get_contact_force(contact_point[8])
                 (h, theta) = self.__get_loc_on_bumper(pos_on_robot)
-
-                return F
+                
+                return (
+                    Fmag * np.sin(theta),
+                    Fmag * np.cos(theta),
+                    0,
+                    -Fmag * np.cos(theta) * h,
+                    Fmag * np.sin(theta) * h,
+                    0,
+                )
         
         return None
 
