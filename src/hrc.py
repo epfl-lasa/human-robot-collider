@@ -161,8 +161,9 @@ def case_both_moving_forward(
 	p.disconnect()
 	collision_forces = np.array(collision_forces)
 	
-	plt.plot(np.linalg.norm(collision_forces[:,0:2],axis=1))
-	plt.show()
+	if show_GUI:
+		plt.plot(np.linalg.norm(collision_forces[:,0:2],axis=1))
+		plt.show()
 
 	return collision_forces
 
@@ -205,3 +206,5 @@ if __name__ == '__main__':
 		for human_speed_factor in [1.0]
 		for gait_phase in np.linspace(0, 1, 4, False)
 	]
+
+	np.save("controlled_collision.npy", result)
