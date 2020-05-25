@@ -8,6 +8,7 @@ import scipy.io as sio
 from walker import *
 from qolo import *
 from collision import *
+from controller import *
 
 class SphericalHighlight():
 	def __init__(self, n_spheres, r_min, r_max, duration, physics_client_id):
@@ -78,11 +79,11 @@ class Ground:
             physicsClientId=pybtPhysicsClient,
 		)
 
-	def advance(self, global_xyz, global_rpy):
+	def advance(self, global_xyz, global_quaternion):
 		p.resetBasePositionAndOrientation(
 			self.id,
 			global_xyz,
-			p.getQuaternionFromEuler(global_rpy)
+			global_quaternion
 		)
 
 
@@ -134,13 +135,15 @@ def case_both_moving_forward(
 	# shape_data = p.getVisualShapeData(robot_body_id)
 	# p.changeVisualShape(robot_body_id, shape_data[0][1], 
 	# 				rgbaColor=[0.4,0.4,0.4, 1])
+	p.setPhysicsEngineParameter(fixedTimeStep=timestep)
 	robot = Qolo(physics_client_id, fixedBase=1, timestep=timestep)
 	human = Human(physics_client_id, partitioned=True, timestep=timestep)
-	collider = Collision(physics_client_id, robot_body_id=robot.body_id, human_body_id=human.body_id)
+	collider = Collision(physics_client_id, robot=robot, human=human)
+	controller = NoControl()
 	
 	if show_GUI:
 		human.setColor()
-		p.configureDebugVisualizer(p.COV_ENABLE_GUI,0)
+		p.configureDebugVisualizer(p.COV_ENABLE_GUI, 0)
 		p.resetDebugVisualizerCamera(1.7, -30, -5, [0, 0, 0.8], physics_client_id)
 		hl = SphericalHighlight(30, 0.003, 0.3, 2.5, physics_client_id)
 		ground = Ground(physics_client_id, os.path.join(pybullet_data.getDataPath(), "plane.urdf"))
@@ -179,27 +182,30 @@ def case_both_moving_forward(
 
 							ti = 0
 							collision_free = True
-							collision_free_ = True
 							time_out = False
 							reset_walker_case_4(human, distance, robot_angle, human_angle, gait_phase)
 							ground_loc = np.zeros(2)
 							while collision_free and not time_out:
 								robot.advance()
-								if collision_free_:
-									human.advance(-robot.global_xyz, -robot.global_rpy)
-								else:
-									human.fix()
-								ground.advance(-robot.global_xyz, -robot.global_rpy)
+								xyz, quaternion = p.invertTransform(robot.global_xyz, robot.global_quaternion)								
+								human.advance(xyz, quaternion)
+								ground.advance(xyz, quaternion)
 
 								p.stepSimulation()
 								
-								(F, h, theta) = collider.get_collision_stat()
+								F = collider.get_collision_force()
 								if F is not None:
 									# last_collision_point = theta
 									# collision_free = False
-									print((F, h, theta))
+									print(F)
+									(v, omega) = controller.update(
+										v_prev=robot.v,
+										omega_prev=robot.omega,
+										F=F
+									)
+									robot.set_speed(v, omega)
+									human.fix()
 									# robot.set_speed(0, 0)
-									collision_free_= False
 	
 								ti += 1
 								if ti > int(t_max/0.01):

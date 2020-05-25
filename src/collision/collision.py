@@ -66,25 +66,26 @@ eff_spring_const_robot = np.array([
 class Collision:
     def __init__(self,
 				 pybtPhysicsClient,
-                 robot_body_id,
-                 human_body_id,
+                 robot,
+                 human,
                  human_mass=75,
                  robot_mass=54.5,
                  bumper_height=0.215,
                  ftsensor_loc=0.035,
                  ):
         self.pybtPhysicsClient = pybtPhysicsClient
-        self.robot_body_id = robot_body_id
-        self.human_body_id = human_body_id
+        self.robot = robot
+        self.human = human
         self.human_mass = human_mass
         self.robot_mass = robot_mass
         self.bumper_height = bumper_height
         self.ftsensor_loc = ftsensor_loc
+        self.solver = None
 
-    def get_collision_stat(self):
+    def get_collision_force(self):
         contact_points = p.getContactPoints(
-            self.human_body_id,
-            self.robot_body_id,
+            self.human.body_id,
+            self.robot.body_id,
         )
 
         for contact_point in contact_points:
@@ -99,10 +100,10 @@ class Collision:
 
                 F = self.__get_contact_force(contact_point[8])
                 (h, theta) = self.__get_loc_on_bumper(pos_on_robot)
-                print(contact_point[9])
-                return (F, h, theta)
+
+                return F
         
-        return (None, None, None)
+        return None
 
     def __collide(self,
                 robot_part_id,

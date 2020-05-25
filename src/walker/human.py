@@ -61,11 +61,12 @@ class Human:
         self.timestep = timestep
 
         # pose containers
+        self.is_fixed = False
         self.global_xyz = np.zeros(3)
-        self.global_rpy = np.zeros(3)
+        self.global_quaternion = p.getQuaternionFromEuler(np.zeros(3))
         self.other_xyz = np.zeros(3)
         self.other_rpy = np.zeros(3)
-        self.joint_positions = np.zeros([44])
+        self.joint_positions = np.zeros(44)
 
         # gait motion data
         self.cyclic_joint_positions = np.load(os.path.join(
@@ -163,11 +164,11 @@ class Human:
 
         self.__apply_pose()
 
-    def advance(self, global_xyz, global_rpy, no_motion=False):
-        if not no_motion:
-            self.global_xyz = self.initial_xyz + global_xyz
-            self.global_rpy = self.initial_rpy + global_rpy
-
+    def advance(self, global_xyz, global_quaternion):
+        self.global_xyz = global_xyz
+        self.global_quaternion = global_quaternion
+            
+        if not self.is_fixed:
             self.other_xyz[:] += self.cyclic_pelvis_forward_velocity[self.gait_phase_step]*self.timestep
 
             self.gait_phase_step += 1
@@ -184,7 +185,7 @@ class Human:
         self.__apply_pose()
 
     def fix(self):
-        self.advance(0, 0, no_motion=True)
+        self.is_fixed = True
 
     def regress(self):
         self.other_xyz[:] -= self.cyclic_pelvis_forward_velocity[self.gait_phase_step]*0.01
@@ -437,11 +438,17 @@ class Human:
             tz + t_phb_center_to_base_com[2]]
 
         # pre-multiply with global transform
-        t_final, r_final = p.multiplyTransforms(
+        t_global, r_global = p.multiplyTransforms(
             self.global_xyz,
-            p.getQuaternionFromEuler(self.global_rpy),
+            self.global_quaternion,
+            self.initial_xyz,
+            p.getQuaternionFromEuler(self.initial_rpy),
+        )
+        t_final, r_final = p.multiplyTransforms(
+            t_global,
+            r_global,
             t_base_com, 
-            r_base_com
+            r_base_com,
         )
 
         # apply it to the base together with a zero translation
