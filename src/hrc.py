@@ -160,8 +160,9 @@ def case_both_moving_forward(
 			delay_timestep = collision_timestep
 		else:
 			if len(collision_forces) > 0:
-				break
-			robot.set_speed(robot_speed, 0)
+				robot.set_speed(0, 0)
+			else:
+				robot.set_speed(robot_speed, 0)
 
 		t += timestep
 
@@ -180,7 +181,7 @@ def case_both_moving_forward(
 			np.linalg.norm(collision_forces[:,0:2], axis=1)
 		)
 		ax[0].set_xlabel("Time [s]")
-		ax[0].set_ylabel("Force [s]")
+		ax[0].set_ylabel("Force [N]")
 		
 		ax[1].plot(
 			np.arange(collision_forces.shape[0])*collision_timestep,
@@ -188,7 +189,7 @@ def case_both_moving_forward(
 			color=(0, 0.4470, 0.7410, 1)
 		)
 		ax[1].set_xlabel("Time [s]")
-		ax[1].set_ylabel("V [m.s]", color=(0, 0.4470, 0.7410, 1))
+		ax[1].set_ylabel("V [m/s]", color=(0, 0.4470, 0.7410, 1))
 		ax[1].tick_params(axis='y', labelcolor=(0, 0.4470, 0.7410, 1))
 
 		ax_ = ax[1].twinx()
@@ -227,7 +228,7 @@ if __name__ == '__main__':
 	parser.add_argument("-g", "--gui",
 						action="store_true",
 						help="Set to show GUI")
-
+	
 	args = parser.parse_args()
 	
 	result = [
