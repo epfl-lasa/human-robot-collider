@@ -1,3 +1,12 @@
+"""Simulator Module.
+
+This module implements simualtion using PyBullet
+"""
+
+__all__ = ['Simulator']
+__version__ = '0.1'
+__author__ = 'Vaibhav Gupta'
+
 import time
 import os
 import logging
