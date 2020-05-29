@@ -79,10 +79,7 @@ class Qolo:
         self.set_color()
 
         # Pose
-        self.global_xyz = np.zeros(3)
-        self.global_quaternion = np.zeros(4)
-        self.yaw_angle = 0
-        self.wheel_phase = np.zeros(2)
+        self.reset()
 
         # Robot Speed
         self.set_speed(v, omega)
@@ -145,3 +142,4 @@ class Qolo:
         self.global_xyz = np.zeros(3)
         self.global_rpy = np.zeros(3)
         self.wheel_phase = np.zeros(2)
+        self.yaw_angle = 0
