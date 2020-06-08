@@ -95,9 +95,8 @@ class AdmittanceController(Controller):
         return (v, omega)
 
     def __get_t(self, theta):
-        """Returns tuning parameter based on angle
-        """
-        return self.__map(np.abs(theta), 0.0, np.pi, 1.0, 0.0)
+        """Returns tuning parameter based on angle"""
+        return self.__map(np.abs(theta), 0.0, np.pi/2, 1.0, 0.0)
 
     def __map(self, x, from_lower, from_upper, to_lower, to_upper):
         return to_lower + ((x - from_lower) * (to_upper - to_lower) / (from_upper - from_lower))
