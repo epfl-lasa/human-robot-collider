@@ -10,5 +10,5 @@ class NoControl(Controller):
                  **kwargs):
         super().__init__(**kwargs)
 
-    def update(self, v, omega, F):
-        return (v, omega)
+    def update(self, F, v_prev, omega_prev, v_cmd, omega_cmd):
+        return (v_cmd, omega_cmd)

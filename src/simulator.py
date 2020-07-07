@@ -94,22 +94,43 @@ class Simulator:
         self.show_GUI = show_GUI
         self.__setup_world()
 
-    def plot_collision_forces(self, collision_forces, robot_target_velocities):
-        f, ax = plt.subplots(1, 2, sharex=True)
+    def plot_collision_forces(self,
+                              collision_forces,
+                              robot_target_velocities,
+                              robot_cmd_velocities,
+                              contact_pt_velocity):
+        f, ax = plt.subplots(2, 2, sharex=True)
 
         time = np.arange(collision_forces.shape[0]) * self.collision_timestep
-        ax[0].plot(time, np.linalg.norm(collision_forces[:, 0:2], axis=1))
-        ax[0].set_xlabel("Time [s]")
-        ax[0].set_ylabel("Force [N]")
+        ax[0, 0].plot(time, np.linalg.norm(collision_forces[:, 0:2], axis=1))
+        ax[0, 0].set_xlabel("Time [s]")
+        ax[0, 0].set_ylabel("Force [N]")
 
-        ax[1].plot(time, robot_target_velocities[:, 0], color=(0, 0.4470, 0.7410, 1))
-        ax[1].set_xlabel("Time [s]")
-        ax[1].set_ylabel("V [m/s]", color=(0, 0.4470, 0.7410, 1))
-        ax[1].tick_params(axis='y', labelcolor=(0, 0.4470, 0.7410, 1))
+        ax[0, 1].plot(time, robot_target_velocities[:, 0], color=(0, 0.4470, 0.7410, 1))
+        ax[0, 1].set_xlabel("Time [s]")
+        ax[0, 1].set_ylabel("v [m/s]", color=(0, 0.4470, 0.7410, 1))
+        ax[0, 1].tick_params(axis='y', labelcolor=(0, 0.4470, 0.7410, 1))
 
-        ax_ = ax[1].twinx()
+        ax_ = ax[0, 1].twinx()
         ax_.plot(time, robot_target_velocities[:, 1], color=(0.8500, 0.3250, 0.0980, 1))
-        ax_.set_ylabel("Omega [rad/s]", color=(0.8500, 0.3250, 0.0980, 1))
+        ax_.set_ylabel("omega [rad/s]", color=(0.8500, 0.3250, 0.0980, 1))
+        ax_.tick_params(axis='y', labelcolor=(0.8500, 0.3250, 0.0980, 1))
+
+        if len(contact_pt_velocity) > 0:
+            time = np.arange(contact_pt_velocity.shape[0]) * self.collision_timestep
+            ax[1, 0].plot(time, contact_pt_velocity)
+            ax[1, 0].set_xlabel("Time [s]")
+            ax[1, 0].set_ylabel("V_contact [m/s]")
+
+        time = np.arange(robot_cmd_velocities.shape[0]) * self.collision_timestep
+        ax[1, 1].plot(time, robot_cmd_velocities[:, 0], color=(0, 0.4470, 0.7410, 1))
+        ax[1, 1].set_xlabel("Time [s]")
+        ax[1, 1].set_ylabel("v_cmd [m/s]", color=(0, 0.4470, 0.7410, 1))
+        ax[1, 1].tick_params(axis='y', labelcolor=(0, 0.4470, 0.7410, 1))
+
+        ax_ = ax[1, 1].twinx()
+        ax_.plot(time, robot_cmd_velocities[:, 1], color=(0.8500, 0.3250, 0.0980, 1))
+        ax_.set_ylabel("omega_cmd [rad/s]", color=(0.8500, 0.3250, 0.0980, 1))
         ax_.tick_params(axis='y', labelcolor=(0.8500, 0.3250, 0.0980, 1))
 
         plt.tight_layout()
@@ -136,36 +157,62 @@ class Simulator:
             and relative_speed > self.miss_speed_threshold
         ):
             # Collision is possible
+            self.cmd_robot_speed = (robot_speed, 0)
             self.collision_over = False
-            self.robot.set_speed(robot_speed, 0)
+            self.robot.set_speed(*self.cmd_robot_speed)
             self.robot.reset()
 
             t = 0
             reset_walker_case_4(self.human, self.DISTANCE, robot_angle, human_angle, gait_phase)
             collision_forces = []
             robot_target_velocities = []
+            robot_cmd_velocities = []
+            contact_pt_velocity = []
             sim_timestep = self.timestep
             self.robot.timestep = self.timestep
             self.human.timestep = self.timestep
             self.controller.timestep = self.timestep
             t_collision_over = None
+            t_collision_start = None
             while t < self.t_max:
                 sim_timestep = self.__step(collision_forces, robot_target_velocities)
                 t += sim_timestep
+
+                robot_cmd_velocities.append(self.cmd_robot_speed)
+                try:
+                    contact_pt_velocity.append(self.controller.V_contact)
+                except Exception:
+                    pass
+
+                # Switch cmd. speed to 0 after 2s of collision
+                if len(collision_forces) > 0:
+                    if t_collision_start is None:
+                        t_collision_start = t
+                    if t - t_collision_start > 2:
+                        self.cmd_robot_speed = (0, 0)
+
+                # Exit simulation 2 sec after collision is over
                 if self.collision_over:
                     if t_collision_over is None:
                         t_collision_over = t
                     if t - t_collision_over > 2:
-                        # Exit simulation 2 sec after collision is over
                         break
+
                 if self.show_GUI:
                     time.sleep(sim_timestep)
 
             collision_forces = np.array(collision_forces)
             robot_target_velocities = np.array(robot_target_velocities)
+            robot_cmd_velocities = np.array(robot_cmd_velocities)
+            contact_pt_velocity = np.array(contact_pt_velocity)
 
             if self.show_GUI:
-                self.plot_collision_forces(collision_forces, robot_target_velocities)
+                self.plot_collision_forces(
+                    collision_forces,
+                    robot_target_velocities,
+                    robot_cmd_velocities,
+                    contact_pt_velocity
+                )
             return collision_forces
 
     def __setup_world(self):
@@ -185,7 +232,11 @@ class Simulator:
 
         # Attach Collision Detector and Controller
         self.collider = Collision(self.physics_client_id, robot=self.robot, human=self.human)
-        self.controller = self.Controller(timestep=self.timestep)
+        self.controller = self.Controller(
+            v_max=self.robot.v_max,
+            omega_max=self.robot.omega_max,
+            timestep=self.timestep
+        )
 
     def __step(self, collision_forces, robot_target_velocities):
         self.robot.advance()
@@ -196,13 +247,16 @@ class Simulator:
         p.stepSimulation()
 
         F = self.collider.get_collision_force()
+
         if F is not None:
             # Collision Detected
             collision_forces.append(F)
             (v, omega) = self.controller.update(
-                v=self.robot.v,
-                omega=self.robot.omega,
-                F=F
+                F=F,
+                v_prev=self.robot.v,
+                omega_prev=self.robot.omega,
+                v_cmd=self.cmd_robot_speed[0],
+                omega_cmd=self.cmd_robot_speed[1],
             )
             self.robot.set_speed(v, omega)
             robot_target_velocities.append([self.robot.v, self.robot.omega])
@@ -212,6 +266,7 @@ class Simulator:
             self.robot.timestep = self.collision_timestep
             self.human.timestep = self.collision_timestep
             self.controller.timestep = self.collision_timestep
+
             return self.collision_timestep
         else:
             if len(collision_forces) > 0:

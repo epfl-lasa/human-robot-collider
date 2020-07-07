@@ -63,6 +63,8 @@ class Qolo:
         self_collisions=False,
         v=0,
         omega=0,
+        v_max=1.5,
+        omega_max=1.0,
         timestep=0.01,
         scaling=1.0
     ):
@@ -83,6 +85,10 @@ class Qolo:
 
         # Robot Speed
         self.set_speed(v, omega)
+
+        # Max. Robot Speed
+        self.v_max = v_max
+        self.omega_max = omega_max
 
         # Time Step
         self.timestep = timestep
