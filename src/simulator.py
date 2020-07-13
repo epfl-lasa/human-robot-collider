@@ -98,40 +98,37 @@ class Simulator:
                               collision_forces,
                               robot_target_velocities,
                               robot_cmd_velocities,
-                              contact_pt_velocity):
+                              contact_pt_velocity,
+                              contact_pt_loc):
         f, ax = plt.subplots(2, 2, sharex=True)
 
         time = np.arange(collision_forces.shape[0]) * self.collision_timestep
-        ax[0, 0].plot(time, np.linalg.norm(collision_forces[:, 0:2], axis=1))
+        # ax[0, 0].plot(time, np.linalg.norm(collision_forces[:, 0:2], axis=1))
+        ax[0, 0].plot(time, collision_forces[:, -1])
         ax[0, 0].set_xlabel("Time [s]")
         ax[0, 0].set_ylabel("Force [N]")
 
         ax[0, 1].plot(time, robot_target_velocities[:, 0], color=(0, 0.4470, 0.7410, 1))
+        ax[0, 1].plot(time, robot_cmd_velocities[:, 0], linestyle="--", color=(0, 0.4470, 0.7410, 0.8))
         ax[0, 1].set_xlabel("Time [s]")
         ax[0, 1].set_ylabel("v [m/s]", color=(0, 0.4470, 0.7410, 1))
         ax[0, 1].tick_params(axis='y', labelcolor=(0, 0.4470, 0.7410, 1))
 
         ax_ = ax[0, 1].twinx()
         ax_.plot(time, robot_target_velocities[:, 1], color=(0.8500, 0.3250, 0.0980, 1))
+        ax_.plot(time, robot_cmd_velocities[:, 1], linestyle="--", color=(0.8500, 0.3250, 0.0980, 0.8))
         ax_.set_ylabel("omega [rad/s]", color=(0.8500, 0.3250, 0.0980, 1))
         ax_.tick_params(axis='y', labelcolor=(0.8500, 0.3250, 0.0980, 1))
 
+        ax[1, 0].plot(time, contact_pt_loc)
+        ax[1, 0].set_xlabel("Time [s]")
+        ax[1, 0].set_ylabel("theta [deg]")
+
         if len(contact_pt_velocity) > 0:
             time = np.arange(contact_pt_velocity.shape[0]) * self.collision_timestep
-            ax[1, 0].plot(time, contact_pt_velocity)
-            ax[1, 0].set_xlabel("Time [s]")
-            ax[1, 0].set_ylabel("V_contact [m/s]")
-
-        time = np.arange(robot_cmd_velocities.shape[0]) * self.collision_timestep
-        ax[1, 1].plot(time, robot_cmd_velocities[:, 0], color=(0, 0.4470, 0.7410, 1))
-        ax[1, 1].set_xlabel("Time [s]")
-        ax[1, 1].set_ylabel("v_cmd [m/s]", color=(0, 0.4470, 0.7410, 1))
-        ax[1, 1].tick_params(axis='y', labelcolor=(0, 0.4470, 0.7410, 1))
-
-        ax_ = ax[1, 1].twinx()
-        ax_.plot(time, robot_cmd_velocities[:, 1], color=(0.8500, 0.3250, 0.0980, 1))
-        ax_.set_ylabel("omega_cmd [rad/s]", color=(0.8500, 0.3250, 0.0980, 1))
-        ax_.tick_params(axis='y', labelcolor=(0.8500, 0.3250, 0.0980, 1))
+            ax[1, 1].plot(time, contact_pt_velocity)
+            ax[1, 1].set_xlabel("Time [s]")
+            ax[1, 1].set_ylabel("V_contact [m/s]")
 
         plt.tight_layout()
         plt.show()
@@ -168,6 +165,7 @@ class Simulator:
             robot_target_velocities = []
             robot_cmd_velocities = []
             contact_pt_velocity = []
+            contact_pt_loc = []
             sim_timestep = self.timestep
             self.robot.timestep = self.timestep
             self.human.timestep = self.timestep
@@ -175,14 +173,14 @@ class Simulator:
             t_collision_over = None
             t_collision_start = None
             while t < self.t_max:
-                sim_timestep = self.__step(collision_forces, robot_target_velocities)
+                sim_timestep = self.__step(
+                    collision_forces,
+                    robot_target_velocities,
+                    robot_cmd_velocities,
+                    contact_pt_velocity,
+                    contact_pt_loc,
+                )
                 t += sim_timestep
-
-                robot_cmd_velocities.append(self.cmd_robot_speed)
-                try:
-                    contact_pt_velocity.append(self.controller.V_contact)
-                except Exception:
-                    pass
 
                 # Switch cmd. speed to 0 after 2s of collision
                 if len(collision_forces) > 0:
@@ -205,13 +203,15 @@ class Simulator:
             robot_target_velocities = np.array(robot_target_velocities)
             robot_cmd_velocities = np.array(robot_cmd_velocities)
             contact_pt_velocity = np.array(contact_pt_velocity)
+            contact_pt_loc = np.array(contact_pt_loc)
 
             if self.show_GUI:
                 self.plot_collision_forces(
                     collision_forces,
                     robot_target_velocities,
                     robot_cmd_velocities,
-                    contact_pt_velocity
+                    contact_pt_velocity,
+                    contact_pt_loc
                 )
             return collision_forces
 
@@ -238,7 +238,12 @@ class Simulator:
             timestep=self.timestep
         )
 
-    def __step(self, collision_forces, robot_target_velocities):
+    def __step(self,
+               collision_forces,
+               robot_target_velocities,
+               robot_cmd_velocities,
+               contact_pt_velocity,
+               contact_pt_loc):
         self.robot.advance()
         xyz, quaternion = p.invertTransform(self.robot.global_xyz, self.robot.global_quaternion)
         self.human.advance(xyz, quaternion)
@@ -250,7 +255,6 @@ class Simulator:
 
         if F is not None:
             # Collision Detected
-            collision_forces.append(F)
             (v, omega) = self.controller.update(
                 F=F,
                 v_prev=self.robot.v,
@@ -259,13 +263,27 @@ class Simulator:
                 omega_cmd=self.cmd_robot_speed[1],
             )
             self.robot.set_speed(v, omega)
-            robot_target_velocities.append([self.robot.v, self.robot.omega])
             self.human.fix()
+
+            # Store data
+            robot_cmd_velocities.append(self.cmd_robot_speed)
+            collision_forces.append(np.hstack([F, self.controller._Fmag]))
+            robot_target_velocities.append([self.robot.v, self.robot.omega])
+            try:
+                contact_pt_velocity.append(self.controller.V_contact)
+                contact_pt_loc.append(self.controller._theta * 180 / np.pi)
+            except Exception:
+                pass
 
             # Update timesteps
             self.robot.timestep = self.collision_timestep
             self.human.timestep = self.collision_timestep
             self.controller.timestep = self.collision_timestep
+
+            if np.isnan(self.controller.V_contact):
+                # Collision has gone below threshold
+                self.robot.set_speed(0, 0)
+                self.collision_over = True
 
             return self.collision_timestep
         else:

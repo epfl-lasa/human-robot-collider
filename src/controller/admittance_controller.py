@@ -27,11 +27,13 @@ class AdmittanceController(Controller):
                  damping_gain=1,
                  robot_mass=2,
                  collision_F_max=25,
+                 activation_F=15,
                  **kwargs):
         super().__init__(**kwargs)
         self.damping_gain = damping_gain
         self.robot_mass = robot_mass
         self.collision_F_max = collision_F_max
+        self.activation_F = activation_F
 
         # Internal State Variables
         self._Fmag = 0.0
@@ -47,7 +49,12 @@ class AdmittanceController(Controller):
     def update(self, F, v_prev, omega_prev, v_cmd, omega_cmd):
         (self._Fx, self._Fy, self._Mz) = (F[0], F[1], F[5])
         self.get_location_on_bumper(self._Fx, self._Fy, self._Mz)
-        return self.__control(v_prev, omega_prev, v_cmd, omega_cmd)
+        if self._Fmag > self.activation_F:
+            return self.__control(v_prev, omega_prev, v_cmd, omega_cmd)
+        else:
+            self.V_contact = np.nan
+            self._theta = np.nan
+            return (v_cmd, omega_cmd)
 
     def __control(self, v_prev, omega_prev, v_cmd, omega_cmd):
         """Get new velocity
@@ -72,16 +79,16 @@ class AdmittanceController(Controller):
         ctheta = np.cos(self._theta)    # Small optimization
 
         # Position wrt center of rotatiion
-        R = np.sqrt((self.bumper_r*stheta)**2
+        O = np.sqrt((self.bumper_r*stheta)**2
                     + (self.bumper_l + self.bumper_r*ctheta)**2)
-        beta = np.arctan2(self.bumper_r * stheta, self.bumper_l)
+        beta = np.arctan2(self.bumper_r * stheta, self.bumper_l + self.bumper_r*ctheta)
 
         sbeta = np.sin(beta)      # Small optimization
         cbeta = np.cos(beta)      # Small optimization
 
         # Admittance Control
         a = ctheta
-        b = R*(stheta*cbeta - ctheta*sbeta)
+        b = O*(stheta*cbeta - ctheta*sbeta)
 
         V_prev = (a * v_prev) + (b * omega_prev)
         V_cmd = (a * v_cmd) + (b * omega_cmd)
@@ -105,7 +112,7 @@ class AdmittanceController(Controller):
         if (abs(b) < eps):
             return (V/a, omega_cmd)
 
-        _ = V - a*omega_cmd / b
+        _ = V - a*v_cmd / b
         if _ > self.omega_max:
             t_max = (self.omega_max - omega_cmd) / (_ - omega_cmd)
         elif _ < -self.omega_max:
@@ -113,7 +120,7 @@ class AdmittanceController(Controller):
         else:
             t_max = 1.0
 
-        _ = V - b*v_cmd / a
+        _ = V - b*omega_cmd / a
         if _ > self.v_max:
             t_min = (self.v_max - omega_cmd) / (_ - omega_cmd)
         elif _ < -self.v_max:
