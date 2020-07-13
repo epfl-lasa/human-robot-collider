@@ -6,6 +6,8 @@ ignore =
     W605,
     # line break after binary operator
     W503,
+    # ambiguous variable name
+    E741,
 max-line-length = 120
 exclude = 
     # No need to traverse our git directory
