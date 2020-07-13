@@ -30,7 +30,17 @@ If `--gui` argument is activated, plot of *collision force* are drawn after each
 At the end of all simulations, `collision_forces` array for all collisions are saven in `controlled_collision.npy` for future use.
 
 ### Examples
-To run simulation of collision between anadult with qolo using admittance controller,
+- To run simulation of collision between a man and qolo using admittance controller (with gui),
 ```shell
-python hrc.py -b adult -r qolo -c admittance -g
+python src/hrc.py -b adult -r qolo -c admittance -g
+```
+
+- To run simulation of collision between a child and qolo using admittance controller (with gui),
+```shell
+python src/hrc.py -b child -r qolo -c admittance -g
+```
+
+- To run simulation of collision between a child and qolo using no compliance controller (with gui),
+```shell
+python src/hrc.py -b child -r qolo -c no_control -g
 ```
