@@ -13,7 +13,11 @@ class AdmittanceController(Controller):
     damping_gain : float
         Damping gain to use
     robot_mass : float
-        Effective mass of the robot.
+        Maximum effective mass of the robot
+    collision_F_max : float
+        Maximum allowed collision force
+    activation_F : float
+        Activation collision force
 
     Notes
     -----
@@ -26,7 +30,7 @@ class AdmittanceController(Controller):
     def __init__(self,
                  damping_gain=1,
                  robot_mass=2,
-                 collision_F_max=25,
+                 collision_F_max=45,
                  activation_F=15,
                  **kwargs):
         super().__init__(**kwargs)
@@ -34,6 +38,7 @@ class AdmittanceController(Controller):
         self.robot_mass = robot_mass
         self.collision_F_max = collision_F_max
         self.activation_F = activation_F
+        self.nominal_F = self.collision_F_max
 
         # Internal State Variables
         self._Fmag = 0.0
@@ -97,8 +102,8 @@ class AdmittanceController(Controller):
         if (abs(V_cmd) > (self.collision_F_max * self.Ts) / self.robot_mass):
             eff_robot_mass = (self.collision_F_max * self.Ts) / abs(V_cmd)
 
-        V_dot = (-self._Fmag - self.damping_gain*V_prev) / eff_robot_mass
-        V = V_dot * self.Ts + V_cmd
+        V_dot = (self.nominal_F - self._Fmag - self.damping_gain*V_prev) / eff_robot_mass
+        V = V_dot * self.Ts
         self.V_contact = V
 
         # Calculate new v and omega in parameterized form
