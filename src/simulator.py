@@ -196,6 +196,12 @@ class Simulator:
                     if t - t_collision_over > 2:
                         break
 
+                # Exit simulation on "q" key press
+                keys = p.getKeyboardEvents(self.physics_client_id)
+                qKey = ord('q')
+                if qKey in keys and keys[qKey] & p.KEY_WAS_TRIGGERED:
+                    break
+
                 if self.show_GUI:
                     time.sleep(sim_timestep)
 
