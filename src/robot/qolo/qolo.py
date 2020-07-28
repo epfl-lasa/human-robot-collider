@@ -4,8 +4,10 @@ import math
 import pybullet as p
 import numpy as np
 
+from .. import Robot
 
-class Qolo:
+
+class Qolo(Robot):
     """Class for QOLO robot.
 
     Parameters
@@ -66,8 +68,10 @@ class Qolo:
         v_max=1.5,
         omega_max=1.0,
         timestep=0.01,
-        scaling=1.0
+        scaling=1.0,
+        **kwargs
     ):
+        super().__init__(**kwargs)
         self.body_id = p.loadURDF(
             os.path.join(os.path.dirname(__file__), "qolo.urdf"),
             flags=p.URDF_MAINTAIN_LINK_ORDER,
