@@ -1,7 +1,7 @@
-import os, math
+import os
 
 import pybullet as p
-import numpy as np
+
 from .. import Human
 
 

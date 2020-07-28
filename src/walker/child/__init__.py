@@ -1,9 +1,10 @@
-"""Man Module.
+"""Child Module.
 
-This module implements man walkers.
+This module implements child walkers.
 """
 
-__all__ = ['Man']
+__all__ = ['Child']
 __version__ = '0.1'
 __author__ = 'Vaibhav Gupta'
 
+from .child import Child
