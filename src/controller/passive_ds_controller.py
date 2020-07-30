@@ -21,19 +21,18 @@ class PassiveDSController(Controller):
     """
 
     def __init__(self,
-                 Mx=10,
-                 My=10,
-                 Cx=10,
-                 Cy=10,
-                 lambda_x=1,
-                 lambda_y=1,
-                 F_d=45,
+                 robot_mass=2,
+                 lambda_t=0.0,
+                 lambda_n=0.5,
+                 Fd=45,
+                 activation_F=15,
                  **kwargs):
         super().__init__(**kwargs)
-        self.M = np.diag([Mx, My])
-        self.C = np.diag([Cx, Cy])
-        self.Lambda = np.diag([lambda_x, lambda_y])
-        self.F_d = F_d
+        self.robot_mass = robot_mass
+        self.activation_F = activation_F
+        self.Lambda = np.diag([lambda_t, lambda_n])
+        self.Fd = Fd
+        self.D = self.Lambda
 
         # Internal State Variables
         self._Fmag = 0.0
@@ -42,7 +41,6 @@ class PassiveDSController(Controller):
         self._Fx = 0.0
         self._Fy = 0.0
         self._Mz = 0.0
-        self._D = self.Lambda
 
         self.V_contact = 0.0
 
@@ -65,9 +63,9 @@ class PassiveDSController(Controller):
             Prev linear velocity
         omega_prev : float
             Prev rotational velocity
-        v_prev : float
+        v_cmd : float
             Demand linear velocity
-        omega_prev : float
+        omega_cmd : float
             Demand rotational velocity
 
         Returns
@@ -75,13 +73,42 @@ class PassiveDSController(Controller):
         tuple(float, float)
             Tuple containing linear and rotational velocity after compliant control
         """
-        v = v_cmd
-        omega = omega_cmd
+        # Jacobian
+        control_pt_x = self.bumper_r * np.cos(self._theta)
+        control_pt_y = self.bumper_r * np.sin(self._theta)
+        self.jacobian = np.array([
+            [1., -control_pt_y],
+            [0., control_pt_x],
+        ])
+        self.inv_jacobian = np.array([
+            [1., control_pt_y/control_pt_x],
+            [0., 1./control_pt_x],
+        ])
 
-        return (v, omega)
+        n_hat = np.array([np.cos(self._theta), np.sin(self._theta)])
+        t_hat = np.array([-np.sin(self._theta), np.cos(self._theta)])
 
-    def __map(self, x, from_range, to_range):
-        return (to_range[0]
-                + ((x - from_range[0])
-                   * (to_range[1] - to_range[0])
-                   / (from_range[1] - from_range[0])))
+        Q = np.array([t_hat, n_hat]).T
+        self.D = Q @ self.Lambda @ Q.T
+
+        V_prev = np.array(self.__differential_to_cartesian(v_prev, omega_prev))
+        V_cmd = np.array(self.__differential_to_cartesian(v_cmd, omega_cmd))
+
+        V = self.timestep / self.robot_mass * (
+            - np.matmul(self.D, V_prev)
+            + self.Fd * n_hat
+            - self._Fmag * n_hat
+        ) + np.matmul(t_hat.T, V_cmd) * t_hat
+
+        # Vd = np.matmul(t_hat.T, V_cmd) * t_hat + (self.Fd - self._Fmag)/self.Lambda[1, 1]*n_hat
+        # V = self.timestep / self.robot_mass * np.matmul(self.D, (Vd - V_prev))
+
+        self.V_contact = n_hat.T @ V
+
+        return self.__cartesian_to_differential(V[0], V[1])
+
+    def __differential_to_cartesian(self, v, omega):
+        return (self.jacobian @ np.array([v, omega]))
+
+    def __cartesian_to_differential(self, vx, vy):
+        return (self.inv_jacobian @ np.array([vx, vy]))

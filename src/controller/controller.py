@@ -23,7 +23,7 @@ class Controller:
                  bumper_l=0.2425):
         self.v_max = v_max
         self.omega_max = omega_max
-        self.Ts = timestep
+        self.timestep = timestep
         self.bumper_l = bumper_l
         self.bumper_r = bumper_r
 

@@ -192,6 +192,9 @@ class Human:
     def fix(self):
         self.is_fixed = True
 
+    def reset(self):
+        self.is_fixed = False
+
     def regress(self):
         self.other_xyz[:] -= self.cyclic_pelvis_forward_velocity[self.gait_phase_step]*0.01
 

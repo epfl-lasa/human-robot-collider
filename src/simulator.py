@@ -12,6 +12,7 @@ import os
 import logging
 
 import matplotlib.pyplot as plt
+import matplotlib.animation as animation
 import pybullet as p
 import pybullet_data
 import numpy as np
@@ -26,12 +27,13 @@ def pos_atan(y, x):
     return a
 
 
-def reset_walker_case_4(walker, distance, robot_angle, human_angle, gait_phase):
+def reset_human(human, distance, robot_angle, human_angle, gait_phase):
+    human.reset()
     x = distance*np.cos(-np.pi/2-robot_angle)
     y = distance*np.sin(-np.pi/2-robot_angle)
     orientation = -np.pi/2-robot_angle + human_angle
-    walker.resetGlobalTransformation(
-        xyz=np.array([x, y, 0.94*walker.scaling]),
+    human.resetGlobalTransformation(
+        xyz=np.array([x, y, 0.94*human.scaling]),
         rpy=np.array([0, 0, orientation-np.pi/2]),
         gait_phase_value=0
     )
@@ -65,7 +67,7 @@ class Simulator:
         walker_scaling=1.0,
         show_GUI=True,
         timestep=0.01,
-        collision_timestep=0.001,
+        collision_timestep=0.01,
         make_video=False,
         fast_forward=False
     ):
@@ -92,6 +94,10 @@ class Simulator:
 
         # set up Bullet with the robot and the walking man
         self.show_GUI = show_GUI
+        if self.show_GUI:
+            self.make_video = make_video
+        else:
+            self.make_video = False
         self.__setup_world()
 
     def plot_collision_forces(self,
@@ -131,7 +137,14 @@ class Simulator:
             ax[1, 1].set_ylabel("V_contact [m/s]")
 
         plt.tight_layout()
-        plt.show()
+
+        if self.make_video:
+            i = 0
+            while os.path.exists(os.path.join("media", "plot_{:d}.png".format(i))):
+                i += 1
+            plt.savefig(os.path.join("media", "plot_{:d}.png".format(i)))
+        else:
+            plt.show()
 
     def simulate(
         self,
@@ -160,7 +173,7 @@ class Simulator:
             self.robot.reset()
 
             t = 0
-            reset_walker_case_4(self.human, self.DISTANCE, robot_angle, human_angle, gait_phase)
+            reset_human(self.human, self.DISTANCE, robot_angle, human_angle, gait_phase)
             collision_forces = []
             robot_target_velocities = []
             robot_cmd_velocities = []
@@ -170,6 +183,26 @@ class Simulator:
             self.robot.timestep = self.timestep
             self.human.timestep = self.timestep
             self.controller.timestep = self.timestep
+            self.collider.timestep = self.timestep
+            p.setTimeStep(self.timestep, self.physics_client_id)
+
+            if self.make_video:
+                ani_fig = plt.figure(figsize=(32, 18))
+                ax = plt.subplot(111)
+                ax.set_frame_on(False)
+                ax.set_xticks([])
+                ax.set_yticks([])
+                plt.axis('off')
+                mat = np.random.random((1080, 1920))
+                image = ax.imshow(mat, interpolation='none', animated=True, label="Video")
+                ani_fig.subplots_adjust(left=0, bottom=0, right=1, top=1, wspace=None, hspace=None)
+                i = 0
+                while os.path.exists(os.path.join("media", "video_{:d}.mp4".format(i))):
+                    i += 1
+                metadata = dict(title='Video', artist='Human Robot Collider')
+                writer = animation.FFMpegWriter(fps=15, metadata=metadata, bitrate=-1, codec="libx264")
+                writer.setup(ani_fig, os.path.join("media", "video_{:d}.mp4".format(i)))
+
             t_collision_over = None
             t_collision_start = None
             while t < self.t_max:
@@ -181,6 +214,18 @@ class Simulator:
                     contact_pt_loc,
                 )
                 t += sim_timestep
+
+                # Save Video Frame for recording
+                if self.make_video:
+                    if t % 0.1 < 1e-6 or 0.1 - (t % 0.1) < 1e-6:
+                        w, h, img, _, _ = p.getCameraImage(
+                            1920, 1080,
+                            renderer=p.ER_BULLET_HARDWARE_OPENGL,
+                            flags=p.ER_NO_SEGMENTATION_MASK
+                        )
+                        # img = np.reshape(img, (w, w, 4)) * (1. / 255.)
+                        image.set_data(img)
+                        writer.grab_frame()
 
                 # Switch cmd. speed to 0 after 2s of collision
                 if len(collision_forces) > 0:
@@ -211,7 +256,12 @@ class Simulator:
             contact_pt_velocity = np.array(contact_pt_velocity)
             contact_pt_loc = np.array(contact_pt_loc)
 
-            if self.show_GUI:
+            if self.make_video:
+                writer.cleanup()
+                if len(collision_forces) <= 0:
+                    os.remove(os.path.join("media", "video_{:d}.mp4".format(i)))
+
+            if self.show_GUI and len(collision_forces) > 0:
                 self.plot_collision_forces(
                     collision_forces,
                     robot_target_velocities,
@@ -227,6 +277,8 @@ class Simulator:
         else:
             self.physics_client_id = p.connect(p.DIRECT)
 
+        p.setTimeStep(self.timestep, self.physics_client_id)
+
         # Insert objects
         self.robot = self.Robot(self.physics_client_id, fixedBase=1, timestep=self.timestep)
         self.human = self.Human(self.physics_client_id, partitioned=True, timestep=self.timestep)
@@ -237,7 +289,7 @@ class Simulator:
             p.resetDebugVisualizerCamera(1.7, -30, -5, [0, 0, 0.8], self.physics_client_id)
 
         # Attach Collision Detector and Controller
-        self.collider = Collision(self.physics_client_id, robot=self.robot, human=self.human)
+        self.collider = Collision(self.physics_client_id, robot=self.robot, human=self.human, timestep=self.timestep)
         self.controller = self.Controller(
             v_max=self.robot.v_max,
             omega_max=self.robot.omega_max,
@@ -260,11 +312,20 @@ class Simulator:
         F = self.collider.get_collision_force()
 
         if F is not None:
-            # Collision Detected
+            # ---- Collision Detected ----
+
+            # Update timesteps
+            self.robot.timestep = self.collision_timestep
+            self.human.timestep = self.collision_timestep
+            self.controller.timestep = self.collision_timestep
+            self.collider.timestep = self.collision_timestep
+            p.setTimeStep(self.collision_timestep, self.physics_client_id)
+
+            # Control Step
             (v, omega) = self.controller.update(
                 F=F,
-                v_prev=self.robot.v,
-                omega_prev=self.robot.omega,
+                v_prev=self.robot.v + self.collider.delta_v,
+                omega_prev=self.robot.omega + self.collider.delta_omega,
                 v_cmd=self.cmd_robot_speed[0],
                 omega_cmd=self.cmd_robot_speed[1],
             )
@@ -280,11 +341,6 @@ class Simulator:
                 contact_pt_loc.append(self.controller._theta * 180 / np.pi)
             except Exception:
                 pass
-
-            # Update timesteps
-            self.robot.timestep = self.collision_timestep
-            self.human.timestep = self.collision_timestep
-            self.controller.timestep = self.collision_timestep
 
             if np.isnan(self.controller.V_contact):
                 # Collision has gone below threshold

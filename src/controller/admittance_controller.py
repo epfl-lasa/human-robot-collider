@@ -28,8 +28,8 @@ class AdmittanceController(Controller):
     """
 
     def __init__(self,
-                 damping_gain=1,
-                 robot_mass=2,
+                 damping_gain=0.2,
+                 robot_mass=5,
                  collision_F_max=45,
                  activation_F=15,
                  **kwargs):
@@ -99,11 +99,11 @@ class AdmittanceController(Controller):
         V_cmd = (a * v_cmd) + (b * omega_cmd)
 
         eff_robot_mass = self.robot_mass
-        if (abs(V_cmd) > (self.collision_F_max * self.Ts) / self.robot_mass):
-            eff_robot_mass = (self.collision_F_max * self.Ts) / abs(V_cmd)
+        if (abs(V_cmd) > (self.collision_F_max * self.timestep) / self.robot_mass):
+            eff_robot_mass = (self.collision_F_max * self.timestep) / abs(V_cmd)
 
         V_dot = (self.nominal_F - self._Fmag - self.damping_gain*V_prev) / eff_robot_mass
-        V = V_dot * self.Ts
+        V = V_dot * self.timestep
         self.V_contact = V
 
         # Calculate new v and omega in parameterized form

@@ -88,8 +88,8 @@ class Collision:
         Weight of the robot, by default 54.5
     bumper_height : float, optional
         Height of the top of the bumper, by default 0.215
-    ftsensor_loc : float, optional
-        Location of FT sensor from COM, by default 0.035
+    ftsensor_loc : [float, float], optional
+        Location of FT sensor from COM, by default [0.035, 0.0]
 
     Attributes
     ----------
@@ -105,7 +105,7 @@ class Collision:
         Weight of the robot
     bumper_height : float
         Height of the top of the bumper
-    ftsensor_loc : float
+    ftsensor_loc : [float, float]
         Location of FT sensor from COM
     eff_mass_robot : float
         Effective mass of the robot for the collision
@@ -123,7 +123,8 @@ class Collision:
         human_mass=75.0,
         robot_mass=54.5,
         bumper_height=0.215,
-        ftsensor_loc=0.035,
+        ftsensor_loc=[0.035, 0.0],
+        timestep=0.01,
     ):
         self.pybtPhysicsClient = pybtPhysicsClient
         self.robot = robot
@@ -132,6 +133,7 @@ class Collision:
         self.robot_mass = robot_mass
         self.bumper_height = bumper_height
         self.ftsensor_loc = ftsensor_loc
+        self.timestep = timestep
 
     def get_collision_force(self):
         """Get collision force in case of collision
@@ -158,6 +160,10 @@ class Collision:
                 Fmag = self.__get_contact_force(contact_point[8])
                 (h, theta) = self.__get_loc_on_bumper(pos_on_robot)
 
+                self.delta_v, self.delta_omega = self.collision_dynamics(
+                    pos_on_robot, Fmag, theta
+                )
+
                 return (
                     Fmag * np.sin(theta),
                     Fmag * np.cos(theta),
@@ -168,6 +174,11 @@ class Collision:
                 )
 
         return None
+
+    def collision_dynamics(self, pos, Fmag, theta):
+        Vx = Fmag * np.sin(theta) * self.timestep / self.robot_mass
+        Vy = Fmag * np.cos(theta) * self.timestep / self.robot_mass
+        return self.__cartesian_to_differential(pos, Vx, Vy)
 
     def __collide(self, robot_part_id, human_part_id):
         """Store parameters based on the colliding parts of the robot and the human
@@ -266,6 +277,14 @@ class Collision:
             return (-self.eff_spring_const * penetration)
 
     def __get_loc_on_bumper(self, pos):
-        theta = np.arctan2(pos[0], - pos[1] - self.ftsensor_loc)
+        theta = np.arctan2(pos[0] - self.ftsensor_loc[1], - pos[1] - self.ftsensor_loc[0])
         h = self.bumper_height - pos[2]
         return (h, theta)
+
+    def __cartesian_to_differential(self, pos, vx, vy):
+        pt = (-pos[1], pos[0])
+        self.inv_jacobian = np.array([
+            [pt[1]/pt[0], 1.],
+            [-1./pt[0], 0.],
+        ])
+        return (self.inv_jacobian @ np.array([vx, vy]))
