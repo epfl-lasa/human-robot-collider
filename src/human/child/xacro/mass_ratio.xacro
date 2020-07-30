@@ -5,7 +5,7 @@
     The segment mass data is calculated using the table 4.1 from the book.
 
     This model's additional details (feet), which are implemented here, are given in
-        Terlemez, Ö., Ulbrich, S., Mandery, C., Do, M., Vahrenkamp, N., & Asfour, T. (2014, November).
+        Terlemez, O., Ulbrich, S., Mandery, C., Do, M., Vahrenkamp, N., & Asfour, T. (2014, November).
         "Master Motor Map (MMM)—Framework and toolkit for capturing, representing, and reproducing human 
         motion on humanoid robots", in 2014 IEEE-RAS International Conference on Humanoid Robots (pp. 894-901)
 -->
