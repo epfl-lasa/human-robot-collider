@@ -63,6 +63,7 @@ class Qolo(Robot):
         pybtPhysicsClient,
         fixedBase=True,
         self_collisions=False,
+        with_rider=True,
         v=0,
         omega=0,
         v_max=1.5,
@@ -72,8 +73,12 @@ class Qolo(Robot):
         **kwargs
     ):
         super().__init__(**kwargs)
+        if with_rider:
+            urdf_file = "qolo_with_rider.urdf"
+        else:
+            urdf_file = "qolo.urdf"
         self.body_id = p.loadURDF(
-            os.path.join(os.path.dirname(__file__), "qolo.urdf"),
+            os.path.join(os.path.dirname(__file__), urdf_file),
             flags=p.URDF_MAINTAIN_LINK_ORDER,
             physicsClientId=pybtPhysicsClient,
             globalScaling=scaling,
@@ -122,6 +127,7 @@ class Qolo(Robot):
             [0.7, 0.7, 0.7, 1],	 # Left Wheel
             [0.7, 0.7, 0.7, 1],	 # Right Wheel
             [0.4, 0.4, 0.4, 1],	 # Bumper
+            [0.9, 0.8, 0.7, 1],	 # Rider
         ]
         for i in range(len(sdl)):
             p.changeVisualShape(self.body_id, sdl[i][1], rgbaColor=colors[i])
