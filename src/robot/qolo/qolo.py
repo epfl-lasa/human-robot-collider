@@ -58,6 +58,9 @@ class Qolo(Robot):
     V_MAX = 1.5
     OMEGA_MAX = 1.0
 
+    # Bumper location
+    ftsensor_loc = [0.035, 0.0]
+
     def __init__(
         self,
         pybtPhysicsClient,
@@ -130,7 +133,10 @@ class Qolo(Robot):
             [0.9, 0.8, 0.7, 1],	 # Rider
         ]
         for i in range(len(sdl)):
-            p.changeVisualShape(self.body_id, sdl[i][1], rgbaColor=colors[i])
+            try:
+                p.changeVisualShape(self.body_id, sdl[i][1], rgbaColor=colors[i])
+            except Exception:
+                pass
 
     def advance(self):
         """Step simulation by a single timestep"""

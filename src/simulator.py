@@ -289,7 +289,13 @@ class Simulator:
             p.resetDebugVisualizerCamera(1.7, -30, -5, [0, 0, 0.8], self.physics_client_id)
 
         # Attach Collision Detector and Controller
-        self.collider = Collision(self.physics_client_id, robot=self.robot, human=self.human, timestep=self.timestep)
+        self.collider = Collision(
+            self.physics_client_id,
+            robot=self.robot,
+            human=self.human,
+            timestep=self.timestep,
+            ftsensor_loc=self.robot.ftsensor_loc,
+        )
         self.controller = self.Controller(
             v_max=self.robot.v_max,
             omega_max=self.robot.omega_max,

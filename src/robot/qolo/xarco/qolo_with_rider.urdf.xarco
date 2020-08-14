@@ -2,7 +2,6 @@
 
 <robot name="qolo" xmlns:xacro="https://www.ros.org/wiki/xacro">
 
-	<!-- <xacro:include filename="man.urdf.xarco"/> -->
   	<xacro:include filename="macros.xacro"/>
 
 	<link name="qolo_main">
