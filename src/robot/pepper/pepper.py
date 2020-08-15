@@ -7,8 +7,8 @@ import numpy as np
 from .. import Robot
 
 
-class Qolo(Robot):
-    """Class for QOLO robot.
+class Pepper(Robot):
+    """Class for Pepper robot.
 
     Parameters
     ----------
@@ -59,16 +59,16 @@ class Qolo(Robot):
     OMEGA_MAX = 1.0
 
     # Bumper Specs
-    ftsensor_loc = [0.035, 0.0]
-    bumper_r = 0.33
-    bumper_l = 0.2425
+    ftsensor_loc = [0.35, 0.0]
+    bumper_r = 0.3
+    bumper_l = 0.2
 
     def __init__(
         self,
         pybtPhysicsClient,
         fixedBase=True,
         self_collisions=False,
-        with_rider=True,
+        with_rider=True,        # Unused
         v=0,
         omega=0,
         v_max=1.5,
@@ -78,17 +78,14 @@ class Qolo(Robot):
         **kwargs
     ):
         super().__init__(**kwargs)
-        if with_rider:
-            urdf_file = "qolo_with_rider.urdf"
-        else:
-            urdf_file = "qolo.urdf"
+        urdf_file = "pepper.urdf"
         self.body_id = p.loadURDF(
             os.path.join(os.path.dirname(__file__), urdf_file),
             flags=p.URDF_MAINTAIN_LINK_ORDER,
             physicsClientId=pybtPhysicsClient,
             globalScaling=scaling,
             useFixedBase=fixedBase,
-            basePosition=[0, 0, 0.2],
+            basePosition=[0, 0, 0],
             baseOrientation=p.getQuaternionFromEuler([0, 0, -math.pi/2])
         )
         self.scaling = scaling
@@ -120,19 +117,12 @@ class Qolo(Robot):
         self.v = np.clip(v, -self.V_MAX, self.V_MAX)
         self.omega = np.clip(omega, -self.OMEGA_MAX, self.OMEGA_MAX)
 
-        wheel_radius = self.scaling * 0.2
-        half_width = self.scaling * 0.545/2
-        self.wheel_speed = np.array([v+omega*half_width, v-omega*half_width]) / (2*math.pi*wheel_radius)
-
     def set_color(self):
         """Set color to the robot"""
         sdl = p.getVisualShapeData(self.body_id)
         colors = [
             [0.4, 0.4, 0.4, 1],	 # Main Body
-            [0.7, 0.7, 0.7, 1],	 # Left Wheel
-            [0.7, 0.7, 0.7, 1],	 # Right Wheel
             [0.4, 0.4, 0.4, 1],	 # Bumper
-            [0.9, 0.8, 0.7, 1],	 # Rider
         ]
         for i in range(len(sdl)):
             try:
@@ -147,19 +137,6 @@ class Qolo(Robot):
                                                      0])
         self.yaw_angle += self.timestep * self.omega
         self.global_quaternion = p.getQuaternionFromAxisAngle((0, 0, 1), self.yaw_angle)
-        self.wheel_phase += self.timestep * self.wheel_speed
-        # Left Wheel
-        p.resetJointState(
-            self.body_id,
-            0,
-            targetValue=self.wheel_phase[0]
-        )
-        # Right Wheel
-        p.resetJointState(
-            self.body_id,
-            1,
-            targetValue=self.wheel_phase[1]
-        )
 
     def reset(self):
         """Reset robot to origin for new simulation"""

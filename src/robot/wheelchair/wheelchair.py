@@ -58,8 +58,10 @@ class Wheelchair(Robot):
     V_MAX = 1.5
     OMEGA_MAX = 1.0
 
-    # Bumper location
+    # Bumper Specs
     ftsensor_loc = [0.35, 0.0]
+    bumper_r = 0.33
+    bumper_l = 0.2425
 
     def __init__(
         self,

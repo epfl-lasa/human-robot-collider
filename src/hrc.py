@@ -4,7 +4,7 @@ import logging
 import numpy as np
 
 from human import Man, Child
-from robot import Qolo, Wheelchair
+from robot import Qolo, Wheelchair, Pepper
 from controller import NoControl, AdmittanceController, PassiveDSController
 from simulator import Simulator
 
@@ -16,6 +16,7 @@ human_class = {
 robot_class = {
     "qolo": Qolo,
     "wheelchair": Wheelchair,
+    "pepper": Pepper,
 }
 controller_class = {
     "no_control": NoControl,

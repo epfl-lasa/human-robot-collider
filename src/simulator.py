@@ -299,7 +299,9 @@ class Simulator:
         self.controller = self.Controller(
             v_max=self.robot.v_max,
             omega_max=self.robot.omega_max,
-            timestep=self.timestep
+            timestep=self.timestep,
+            bumper_r=self.robot.bumper_r,
+            bumper_l=self.robot.bumper_l,
         )
 
     def __step(self,
