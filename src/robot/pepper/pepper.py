@@ -59,7 +59,7 @@ class Pepper(Robot):
     OMEGA_MAX = 1.0
 
     # Bumper Specs
-    ftsensor_loc = [0.35, 0.0]
+    ftsensor_loc = [0.0, 0.0]
     bumper_r = 0.3
     bumper_l = 0.2
 
