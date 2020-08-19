@@ -200,7 +200,7 @@ class Simulator:
                 while os.path.exists(os.path.join("media", "video_{:d}.mp4".format(i))):
                     i += 1
                 metadata = dict(title='Video', artist='Human Robot Collider')
-                writer = animation.FFMpegWriter(fps=15, metadata=metadata, bitrate=-1, codec="libx264")
+                writer = animation.FFMpegWriter(fps=15, metadata=metadata, bitrate=-1, codec="h264")
                 writer.setup(ani_fig, os.path.join("media", "video_{:d}.mp4".format(i)))
 
             t_collision_over = None
@@ -227,18 +227,18 @@ class Simulator:
                         image.set_data(img)
                         writer.grab_frame()
 
-                # Switch cmd. speed to 0 after 2s of collision
-                if len(collision_forces) > 0:
-                    if t_collision_start is None:
-                        t_collision_start = t
-                    if t - t_collision_start > 2:
-                        self.cmd_robot_speed = (0, 0)
+                # # Switch cmd. speed to 0 after 2s of collision
+                # if len(collision_forces) > 0:
+                #     if t_collision_start is None:
+                #         t_collision_start = t
+                #     if t - t_collision_start > 2:
+                #         self.cmd_robot_speed = (0, 0)
 
                 # Exit simulation 2 sec after collision is over
                 if self.collision_over:
                     if t_collision_over is None:
                         t_collision_over = t
-                    if t - t_collision_over > 2:
+                    if t - t_collision_over > 3:
                         break
 
                 # Exit simulation on "q" key press
@@ -352,13 +352,15 @@ class Simulator:
 
             if np.isnan(self.controller.V_contact):
                 # Collision has gone below threshold
-                self.robot.set_speed(0, 0)
+                # self.robot.set_speed(0, 0)
+                self.robot.set_speed(*self.cmd_robot_speed)
                 self.collision_over = True
 
             return self.collision_timestep
         else:
             if len(collision_forces) > 0:
                 # No collision after collision has occured
-                self.robot.set_speed(0, 0)
+                # self.robot.set_speed(0, 0)
+                self.robot.set_speed(*self.cmd_robot_speed)
                 self.collision_over = True
             return self.timestep
