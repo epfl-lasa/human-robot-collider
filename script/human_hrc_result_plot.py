@@ -20,6 +20,7 @@ def rotate_by_inverse_of_quaternion(vec3, q):
 		R[2]*vec3[0] + R[5]*vec3[1] + R[8]*vec3[2]]
 	return result
 
+# function to get the position and orientation of a link or the base of a multi-body (such as the human model)
 def getLinkOrBaseState(body_id, link_index):
 	if link_index > -1:
 		link_state = p.getLinkState(body_id, link_index,
@@ -29,6 +30,7 @@ def getLinkOrBaseState(body_id, link_index):
 		link_state = [None, None, None, None, base_position, base_orientation]
 	return link_state
 
+# LOAD THE DATA OF COLLISION POINTS
 result_child = np.load("qolo_contact_points_case_4_with_velocities_child.npy")
 phase_2_res_child = sio.loadmat("qolo_case_4_force_peaks_phase_2_child.mat")
 result_adult = np.load("qolo_contact_points_case_4_with_velocities_adult.npy")
@@ -42,14 +44,17 @@ for i in [0,1]:
 	result = results[i]
 	phase_2_res = phase_2_results[i]
 
+	#EXTRACT FORCE COLUMN FROM THE LOADED DATA
 	color_coding = phase_2_res['color_coding']
 	f_normalized = phase_2_res['F_normalize_per_iteration']
 	global_scaling = result[0, 19]
 
+	# POSITION THE BODY AND SET A GOOD POSE
 	m = Man(physics_client_id, partitioned = True, scaling = global_scaling)
 	m.setGaitPhase(0.45)
 	m.resetGlobalTransformation([x_positions[i],0,0.94*m.scaling],[0,0,0])
 
+	# COLOR THE BODY WITH A SUITABLE UNIFORM COLOR
 	sdl = p.getVisualShapeData(m.body_id)
 	for i in range(len(sdl)):
 		p.changeVisualShape(m.body_id, sdl[i][1], 
@@ -68,6 +73,7 @@ for i in [0,1]:
 	p.configureDebugVisualizer(p.COV_ENABLE_GUI,0)
 	#p.resetDebugVisualizerCamera(1.5,(np.arctan2(0.35,0.7))/np.pi/2.0*360+180,0,[0.7,0.35,0])
 
+	# PLOT SPHERES OVER THE BODY AT THE LOCATIONS OF COLLISION POINTS
 	colSphereId = p.createCollisionShape(p.GEOM_SPHERE, radius = 0.005)
 	#visSphereId = p.createVisualShape(p.GEOM_SPHERE, radius = 0.005)
 	for i in range(np.size(result,0)):
@@ -77,8 +83,11 @@ for i in [0,1]:
 		link_index = int(result[i, 1])
 		cp_local = result[i, 20:23]
 
+		# GET THE TF FROM THE GLOBAL COORDINATE SYSTEM TO THE BODY PART'S LOCAL COORDINATE SYSTEM
 		link_state = getLinkOrBaseState(m.body_id, link_index)
+		# Transform the COLLISION POINT'S LOCAL POSITION cp_local THAT IS GIVEN IN THE LOCAL FRAME into the global frame
 		cp_global = np.array(link_state[4]) + np.array(rotate_by_quaternion(cp_local, link_state[5]))
+		# create a sphere at this position
 		visSphereId = p.createVisualShape(p.GEOM_SPHERE, radius = 0.009/1.75)#f_normalized[i]/4*0.015)
 		sphere_id = p.createMultiBody(0, colSphereId, visSphereId, cp_global)
 		sdl = p.getVisualShapeData(sphere_id)
