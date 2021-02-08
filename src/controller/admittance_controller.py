@@ -103,7 +103,7 @@ class AdmittanceController(Controller):
             eff_robot_mass = (self.collision_F_max * self.timestep) / abs(V_cmd)
 
         V_dot = (self.nominal_F - self._Fmag - self.damping_gain*V_prev) / eff_robot_mass
-        V = V_dot * self.timestep
+        V = V_dot * self.timestep + V_cmd
         self.V_contact = V
 
         # Calculate new v and omega in parameterized form
