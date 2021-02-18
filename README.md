@@ -17,13 +17,13 @@ The simulation can be excuted by the following command,
 python path/to/human-robot-collider/src/hrc.py
 ```
 
-| Argument              | Options                   | Help                                                  |
-| ---                   | ---                       | ---                                                   |
-|`-h`, `--help`         |                           | Show the help message and exit                        |
-|`-b`, `--human`        | `man`, `child`            | Human to collide with the robot (default = `man`)     |
-|`-r`, `--robot`        | `qolo`                    | Robot to collide with the human (default = `qolo`)    |
-|`-c`, `--controller`   | `no_control`, `admittance`| Adaptive controller to use (default = `no_control`)   |
-|`-g`, `--gui`          |                           | Set to show GUI                                       |
+| Argument              | Options                                 | Help                                                  |
+| ---                   | ---                                     | ---                                                   |
+|`-h`, `--help`         |                                         | Show the help message and exit                        |
+|`-b`, `--human`        | `man`, `child`                          | Human to collide with the robot (default = `man`)     |
+|`-r`, `--robot`        | `qolo`, `wheelchair`, `pepper`          | Robot to collide with the human (default = `qolo`)    |
+|`-c`, `--controller`   | `no_control`, `admittance`, `passive_ds`| Adaptive controller to use (default = `no_control`)   |
+|`-g`, `--gui`          |                                         | Set to show GUI                                       |
 
 If `--gui` argument is activated, plot of *collision force* are drawn after each collision.
 
