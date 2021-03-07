@@ -1,0 +1,17 @@
+[flake8]
+ignore = 
+    # missing whitespace around arithmetic operator
+    E226,
+    # invalid escape sequence
+    W605,
+    # line break after binary operator
+    W503,
+    # ambiguous variable name
+    E741,
+max-line-length = 120
+exclude = 
+    # No need to traverse our git directory
+    .git,
+    # There's no value in checking cache directories
+    __pycache__,
+max-complexity = 10
