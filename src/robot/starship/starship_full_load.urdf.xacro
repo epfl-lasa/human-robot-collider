@@ -1,0 +1,53 @@
+<?xml version="1.0"?>
+
+
+<robot name="starship" xmlns:xacro="https://www.ros.org/wiki/xacro">
+
+  	<xacro:include filename="macros.xacro"/>
+	<xacro:arg name="load" default="0"/>
+
+	<link name="starship_main">
+		<inertial>
+			<origin rpy = "0 0 0" xyz = "0 0 0" />                 
+			<mass value = "50" />
+                	<inertia ixx="${50*0.05208016666666668}" ixy="0.0" ixz="0.0"
+                         	 iyy="${50*0.06525641666666668}" iyz="0.0"
+                         	 izz="${50*0.06525641666666668}" />
+        	</inertial> 
+
+		<xacro:read_stl_file 
+			filename="stl/starship.stl"
+			scale="0.001" 
+			xyz="${[0, 0, 0]}"  
+			rpy="${[0, 0, pi/2]}"
+		/>
+	</link>
+
+	<link name="bumper">
+		<inertial>
+			<origin rpy = "0 0 0" xyz = "0 0 0" />
+			<mass value = "1.5" />
+			<inertia ixx = "0.02155077848" 
+				 ixy = "0.00000859993"
+				 ixz = "0.00000332812"
+				 iyy = "0.03332543416"
+				 iyz = "0.00575422413"
+				 izz = "0.04216038950" />
+		</inertial>
+
+		<xacro:read_stl_file 
+			filename="stl/bumper.stl"
+			scale="1" 
+			xyz="${[0, 0, 0]}"  
+			rpy="${[0, 0, pi/2]}"
+		/>
+  	</link>
+
+	<xacro:joint_macro 
+		parent="starship_main" 
+		child="bumper" 
+		type="fixed"
+		conn_origin="${[0.350, 0, 0.19]}"
+	/>
+
+</robot>

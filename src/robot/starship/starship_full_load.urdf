@@ -12,15 +12,15 @@
     </inertial>
     <visual>
       <geometry>
-        <mesh filename="stl/Robot_assembly v30.stl" scale="0.001 0.001 0.001"/>
+        <mesh filename="stl/starship.stl" scale="0.001 0.001 0.001"/>
       </geometry>
-      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <origin rpy="0 0 1.5707963267948966" xyz="0 0 0"/>
     </visual>
     <collision>
       <geometry>
-        <mesh filename="stl/Robot_assembly v30.stl" scale="0.001 0.001 0.001"/>
+        <mesh filename="stl/starship.stl" scale="0.001 0.001 0.001"/>
       </geometry>
-      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <origin rpy="0 0 1.5707963267948966" xyz="0 0 0"/>
     </collision>
   </link>
   <link name="bumper">
