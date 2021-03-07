@@ -16,10 +16,10 @@
         	</inertial> 
 
 		<xacro:read_stl_file 
-			filename="stl/Robot_assembly v30.stl"
+			filename="stl/starship.stl"
 			scale="0.001" 
 			xyz="${[0, 0, 0]}"  
-			rpy="${[0, 0, 0]}"
+			rpy="${[0, 0, pi/2]}"
 		/>
 	</link>
 
