@@ -18,7 +18,8 @@ import pybullet_data
 import numpy as np
 
 from collision import Collision
-
+parts_hitlist = np.zeros(10)
+total_hitlist = 0
 
 def pos_atan(y, x):
     a = np.arctan2(y, x)
@@ -85,7 +86,7 @@ class Simulator:
         robot_radius = 0.6
         human_radius = 0.6 * walker_scaling
         self.nominal_human_speed = 1.1124367713928223 * 0.95 * walker_scaling
-        self.nominal_robot_speed = 1.0
+        self.nominal_robot_speed = 2.0
 
         miss_angle_tmp = np.arccos(np.sqrt(1 - (robot_radius+human_radius)**2 / distance**2))
         self.miss_angle_lower_threshold = np.pi - miss_angle_tmp
@@ -113,13 +114,14 @@ class Simulator:
         ax[0, 0].plot(time, collision_forces[:, -1])
         ax[0, 0].set_xlabel("Time [s]")
         ax[0, 0].set_ylabel("Force [N]")
+        ax[0, 0].grid()
 
         ax[0, 1].plot(time, robot_target_velocities[:, 0], color=(0, 0.4470, 0.7410, 1))
         ax[0, 1].plot(time, robot_cmd_velocities[:, 0], linestyle="--", color=(0, 0.4470, 0.7410, 0.8))
         ax[0, 1].set_xlabel("Time [s]")
         ax[0, 1].set_ylabel("v [m/s]", color=(0, 0.4470, 0.7410, 1))
         ax[0, 1].tick_params(axis='y', labelcolor=(0, 0.4470, 0.7410, 1))
-
+        ax[0, 1].grid()
         ax_ = ax[0, 1].twinx()
         ax_.plot(time, robot_target_velocities[:, 1], color=(0.8500, 0.3250, 0.0980, 1))
         ax_.plot(time, robot_cmd_velocities[:, 1], linestyle="--", color=(0.8500, 0.3250, 0.0980, 0.8))
@@ -129,15 +131,14 @@ class Simulator:
         ax[1, 0].plot(time, contact_pt_loc)
         ax[1, 0].set_xlabel("Time [s]")
         ax[1, 0].set_ylabel("theta [deg]")
-
+        ax[1, 0].grid()
         if len(contact_pt_velocity) > 0:
             time = np.arange(contact_pt_velocity.shape[0]) * self.collision_timestep
             ax[1, 1].plot(time, contact_pt_velocity)
             ax[1, 1].set_xlabel("Time [s]")
             ax[1, 1].set_ylabel("V_contact [m/s]")
-
+            ax[1, 1].grid()
         plt.tight_layout()
-
         if self.make_video:
             i = 0
             while os.path.exists(os.path.join("media", "plot_{:d}.png".format(i))):
@@ -161,7 +162,6 @@ class Simulator:
         relative_velocity = human_velocity - robot_velocity
         relative_speed = np.sqrt(np.dot(relative_velocity, relative_velocity))
         angle_relative_v = pos_atan(relative_velocity[1], relative_velocity[0])
-
         if (
             self.miss_angle_lower_threshold < angle_relative_v < self.miss_angle_upper_threshold
             and relative_speed > self.miss_speed_threshold
@@ -316,8 +316,10 @@ class Simulator:
         self.ground.advance(xyz, quaternion)
 
         p.stepSimulation()
-
-        F = self.collider.get_collision_force()
+#+ self.collider.delta_v
+        global total_hitlist
+        global parts_hitlist
+        F, parts_hitlist,total_hitlist = self.collider.get_collision_force()
 
         if F is not None:
             # ---- Collision Detected ----
@@ -328,17 +330,18 @@ class Simulator:
             self.controller.timestep = self.collision_timestep
             self.collider.timestep = self.collision_timestep
             p.setTimeStep(self.collision_timestep, self.physics_client_id)
-
             # Control Step
             (v, omega) = self.controller.update(
                 F=F,
-                v_prev=self.robot.v + self.collider.delta_v,
+                v_prev=self.robot.v ,
                 omega_prev=self.robot.omega + self.collider.delta_omega,
                 v_cmd=self.cmd_robot_speed[0],
                 omega_cmd=self.cmd_robot_speed[1],
             )
             self.robot.set_speed(v, omega)
+            self.cmd_robot_speed = (v, omega)
             self.human.fix()
+            #self.human.regress()
 
             # Store data
             robot_cmd_velocities.append(self.cmd_robot_speed)
@@ -352,7 +355,7 @@ class Simulator:
 
             if np.isnan(self.controller.V_contact):
                 # Collision has gone below threshold
-                # self.robot.set_speed(0, 0)
+                #self.robot.set_speed(0, 0)
                 self.robot.set_speed(*self.cmd_robot_speed)
                 self.collision_over = True
 
@@ -360,7 +363,11 @@ class Simulator:
         else:
             if len(collision_forces) > 0:
                 # No collision after collision has occured
-                # self.robot.set_speed(0, 0)
+                #self.robot.set_speed(0, 0)
                 self.robot.set_speed(*self.cmd_robot_speed)
                 self.collision_over = True
             return self.timestep
+    def fetch_hitlists(self):
+        global total_hitlist
+        global parts_hitlist
+        return parts_hitlist, total_hitlist
