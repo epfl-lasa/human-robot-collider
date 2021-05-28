@@ -65,29 +65,29 @@ elastic_mod_human_adult = np.array([
     2, 2,      # forearms
     0.6, 0.6,  # hands
     6.5, 	   # neck
-    6.5, 	   # head + face (?)
+    4.7, 	   # head + face (?)
     0.634, 0.634,    # soles (Same as shin)  <-- Previous implementation was different
     0.634, 0.634,    # toes (Same as shin)   <-- Previous implementation was different
     7.44, 	   # chest (back)
     7.44, 	   # belly (back)
     11, 	   # pelvis (back)
     6.5, 	   # neck (back)
-    6.5, 	   # head (back)
+    4.7, 	   # head (back)
 ]) *1e9
 human_radius_adult = np.array([
     0.27, 	   # chest
     0.25, 	   # belly
     0.21, 	   # pelvis
     0.07, 0.07,    # upper legs    <-- Previous implementation was different
-    0.034, 0.034,    # shins         <-- Previous implementation was different
-    0.034, 0.034,    # ankles/feet (Same as shin)    <-- Previous implementation was different
+    0.039, 0.039,    # shins         <-- Previous implementation was different
+    0.039, 0.039,    # ankles/feet (Same as shin)    <-- Previous implementation was different
     0.06, 0.06,      # upper arms
     0.03, 0.03,      # forearms
     0.6, 0.6,  # hands
     0.09, 	   # neck
     0.1, 	   # head + face (?)
-    0.04, 0.04,    # soles (Same as shin)  <-- Previous implementation was different
-    0.04, 0.04,    # toes (Same as shin)   <-- Previous implementation was different
+    0.039, 0.039,    # soles (Same as shin)  <-- Previous implementation was different
+    0.039, 0.039,    # toes (Same as shin)   <-- Previous implementation was different
     0.27, 	   # chest (back)
     0.25, 	   # belly (back)
     0.21, 	   # pelvis (back)
@@ -123,9 +123,15 @@ poisson_ratio_robot = 0.33
 robot_radius = 0.4
 elastic_mod_robot_cover = 3300*1e6
 poisson_ratio_robot_cover = 0.41
-cover_width = 0.015
+cover_width = 0.02
 hit_counter_part = np.zeros(10)
 hit_counter_total = 0
+delta_robot = 0
+prev_constant = 0
+deformation = 0
+el_mod_r = 0
+el_mod_h = 0
+vel_init = 0
 class Collision:
     """[summary]
 
@@ -175,11 +181,11 @@ class Collision:
         pybtPhysicsClient,
         robot,
         human,
-        human_mass=75.0,
+        human_mass=5.0,
         robot_mass=133.5,
-        bumper_height=0.215,
+        bumper_height=0.215, #0.215 for adult #0.85 for child
         ftsensor_loc=[0.035, 0.0],
-        timestep=0.01,
+        timestep=0.00005,
     ):
         self.pybtPhysicsClient = pybtPhysicsClient
         self.robot = robot
@@ -204,6 +210,11 @@ class Collision:
             self.robot.body_id,
         )
         global hit_counter_total
+        global delta_robot
+        global deformation 
+        global el_mod_r
+        global el_mod_h
+        global vel_init
         for contact_point in contact_points:
             if contact_point[8] <= 0:
                 # Penetration or Contact
@@ -253,8 +264,18 @@ class Collision:
                 if(human_part_id == 1):
                     hit_counter_part[9] += 1 #pelvis
                     hit_counter_total += 1
-                self.__collide(robot_part_id, human_part_id, contact_point[8])
-                Fmag = self.__get_contact_force(contact_point[8])
+                #if (hit_counter_total<1):
+                vel_init = self.robot.v
+                deformation = -self.robot.v*0.00005+deformation 
+                if deformation<0:
+                    self.__collide(robot_part_id, human_part_id, deformation, self.robot.v)
+                    #print(deformation, contact_point[8])
+                    Speed = 0
+                    Fmag = self.__get_contact_force(deformation)
+                    Speed = self._get_passed_velocity(deformation, Fmag, Speed)
+                else: 
+                    Fmag = 0
+                    Speed = 0
                 (h, theta) = self.__get_loc_on_bumper(pos_on_robot)
 
                 self.delta_v, self.delta_omega = self.collision_dynamics(
@@ -268,16 +289,16 @@ class Collision:
                     -Fmag * np.cos(theta) * h,
                     Fmag * np.sin(theta) * h,
                     0,
-                ), hit_counter_part, hit_counter_total
+                ), hit_counter_part, hit_counter_total, Speed, deformation, el_mod_r,el_mod_h, self.eff_spring_const
 
-        return None, hit_counter_part, hit_counter_total
+        return None, hit_counter_part, hit_counter_total, 0, 0, 0, 0, 0
 
     def collision_dynamics(self, pos, Fmag, theta):
         Vx = Fmag * np.sin(theta) * self.timestep / self.robot_mass
         Vy = Fmag * np.cos(theta) * self.timestep / self.robot_mass
         return self.__cartesian_to_differential(pos, Vx, Vy)
 
-    def __collide(self, robot_part_id, human_part_id, penetration):
+    def __collide(self, robot_part_id, human_part_id, penetration, vel_init):
         """Store parameters based on the colliding parts of the robot and the human
 
         Parameters
@@ -287,14 +308,28 @@ class Collision:
         human_part_id : int
             Part ID of colliding part of human
         """
+        global prev_constant
+        global el_mod_r
+        global el_mod_h
         self.eff_mass_robot = self.__get_eff_mass_robot(robot_part_id)
         self.eff_mass_human = self.__get_eff_mass_human(human_part_id)
         #if penetration > 0:
         k_robot = self.__get_eff_spring_const_human(robot_part_id)
         k_human = self.__get_eff_spring_const_human(human_part_id)
+        el_mod_r = self.__get_eff_elastic_mod_robot(robot_part_id, penetration, vel_init)
+        el_mod_h = self.__get_eff_elastic_mod_human(human_part_id, penetration, vel_init)
         #self.eff_spring_const = 1 / (1/k_robot + 1/k_human)
+
+        #OUTDATED CODE FOR ABBERANT VALUES
         #else:
-        self.eff_spring_const = (4/3)*(1/(((1-(poisson_ratio_robot_cover**2))/self.__get_eff_elastic_mod_robot(robot_part_id, penetration))+((1-(poisson_ratio_scalp**2))/self.__get_eff_elastic_mod_human(human_part_id, penetration))))*(((1/(scalp_width+human_radius_adult[human_part_id]))+(1/(cover_width+robot_radius)))**(-1/2))
+        #print(prev_constant)
+        #if (abs((4/3)*(1/(((1-(poisson_ratio_robot_cover**2))/self.__get_eff_elastic_mod_robot(robot_part_id, penetration,vel_init))+((1-(poisson_ratio_scalp**2))/self.__get_eff_elastic_mod_human(human_part_id, penetration,vel_init))))*(((1/(scalp_width+human_radius_adult[human_part_id]))+(1/(cover_width+robot_radius)))**(-1/2)) - prev_constant) > 1e6):
+         #   self.eff_spring_const = prev_constant
+         #   prev_constant = abs((4/3)*(1/(((1-(poisson_ratio_robot_cover**2))/self.__get_eff_elastic_mod_robot(robot_part_id, penetration, vel_init))+((1-(poisson_ratio_scalp**2))/self.__get_eff_elastic_mod_human(human_part_id, penetration, vel_init))))*(((1/(scalp_width+human_radius_adult[human_part_id]))+(1/(cover_width+robot_radius)))**(-1/2)))
+        #else:
+        self.eff_spring_const = (4/3)*(1/(((1-(poisson_ratio_robot_cover**2))/self.__get_eff_elastic_mod_robot(robot_part_id, penetration, vel_init))+((1-(poisson_ratio_scalp**2))/self.__get_eff_elastic_mod_human(human_part_id, penetration,vel_init))))*(((1/(scalp_width+human_radius_adult[human_part_id]))+(1/(cover_width+robot_radius)))**(-1/2))
+        prev_constant = self.eff_spring_const
+
 
     def __get_eff_mass_human(self, part_id):
         """Get effective human mass based on colliding part
@@ -356,23 +391,29 @@ class Collision:
         """
         return eff_mass_robot[part_id] * self.robot_mass
         
-    def __get_eff_elastic_mod_human(self, part_id,penetration):
+    def __get_eff_elastic_mod_human(self, part_id,penetration, vel_init):
         if penetration > 0:
             return 0
         else:
-            eff_elastic_mod_human = 1+(((elastic_mod_scalp/elastic_mod_human_adult[part_id])-1)*np.exp((pow((-penetration/scalp_width), 1.5))*pow((elastic_mod_scalp/elastic_mod_human_adult[part_id]), 0.8)))
-            #print('1',eff_elastic_mod_human)
-            eff_elastic_mod_human = np.sqrt(np.real(eff_elastic_mod_human)**2+np.imag(eff_elastic_mod_human)**2)
-            return (2.5e5*eff_elastic_mod_human)
+            eff_elastic_mod_human = 1+(((elastic_mod_scalp/(elastic_mod_human_adult[part_id]))-1)*np.exp((pow((-penetration/scalp_width), 0.5))*pow((elastic_mod_scalp/elastic_mod_human_adult[part_id]), 0.95)))
+            #print('1',1.55e5*eff_elastic_mod_human)
+            #eff_elastic_mod_human = np.sqrt(np.real(eff_elastic_mod_human)**2+np.imag(eff_elastic_mod_human)**2)
+
+            #Ea=-1.3e7, nh=0.5, compr_coef = 0.95 for adult
+            #Ea = -8.3e8, nh = 3.5, comp_coef = 0.75 for child
+            return (-1.3e7*(vel_init**1.25)*eff_elastic_mod_human)
     	
-    def __get_eff_elastic_mod_robot(self, part_id,penetration):
+    def __get_eff_elastic_mod_robot(self, part_id,penetration, vel_init):
         if penetration > 0:
             return 0
         else:
-            eff_elastic_mod_robot = 1+(((elastic_mod_robot_cover/elastic_mod_robot)-1)*np.exp(((-penetration/(2*cover_width))**1.5)*(elastic_mod_robot_cover/elastic_mod_robot)**0.8))
-            eff_elastic_mod_robot = np.sqrt(np.real(eff_elastic_mod_robot)**2+np.imag(eff_elastic_mod_robot)**2)
-            #print('2',eff_elastic_mod_robot)
-            return (2.5e5*eff_elastic_mod_robot)
+            eff_elastic_mod_robot = 1+(((elastic_mod_robot_cover/elastic_mod_robot)-1)*np.exp((pow(-penetration/(3.1*cover_width),0.5))*pow((elastic_mod_robot_cover/elastic_mod_robot),0.95)))
+            #eff_elastic_mod_robot = np.sqrt(np.real(eff_elastic_mod_robot)**2+np.imag(eff_elastic_mod_robot)**2)
+            #print('2',1.55e5*eff_elastic_mod_robot)
+
+            #Eb = 2e8 for adult, 3.1 for x
+            #Eb = 3.4e8 for child
+            return (2e8*(vel_init**1.25)*eff_elastic_mod_robot)
 
     def __get_contact_force(self, penetration):
         """Get contact force based on penetration
@@ -391,8 +432,33 @@ class Collision:
             # No Contact
             return 0
         else:
-            return self.eff_spring_const * (abs(penetration)**1.5)
+            #print(penetration, self.eff_spring_const,self.eff_spring_const * (abs(penetration)**1.5))
+            return (self.eff_spring_const) * (abs(penetration)**1.5)
 
+    def _get_passed_velocity(self, penetration, force, speed):
+        """Get velocity passed to human body part
+
+        Parameters
+        ----------
+        penetration : float
+            Penetration of robot into human
+
+        Returns
+        -------
+        float
+            Effective Contact Force
+        
+        if penetration > 0:
+            # No Contact
+            return 0
+        else:
+            work = abs(force*penetration)
+            speed = np.sqrt(2*work/(self.human_mass*self.robot_mass/(self.human_mass+self.robot_mass)))
+            return speed
+        """
+        speed = (0.9*self.robot_mass*(self.robot.v) + self.robot_mass*self.robot.v)/(self.robot_mass+self.human_mass)
+        #print(speed)
+        return speed
     def __get_loc_on_bumper(self, pos):
         theta = np.arctan2(pos[0] - self.ftsensor_loc[1], - pos[1] - self.ftsensor_loc[0])
         h = self.bumper_height - pos[2]

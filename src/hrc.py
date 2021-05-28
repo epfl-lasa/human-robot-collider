@@ -67,7 +67,7 @@ if __name__ == '__main__':
 
     robot_angles = np.linspace(0, np.pi*2, 16, False)
     human_angles = np.linspace(0, np.pi*2, 16, False)
-    robot_speed_factors = [0.5]  # np.linspace(0.6, 1.4, 3, True)
+    robot_speed_factors = [1.0]  # np.linspace(0.6, 1.4, 3, True)
     human_speed_factors = [1.0]
     gait_phases = [0]  # np.linspace(0, 1, 4, False)
     parts_hitlist = np.zeros(10)
@@ -88,6 +88,7 @@ if __name__ == '__main__':
     parts_hitlist, total_hitlist = simulator.fetch_hitlists()
     for i in range(len(parts_hitlist)):
         parts_hitlist[i] = parts_hitlist[i]/total_hitlist
+    print(total_hitlist)
     print(parts_hitlist)
     result_name = 'controlled_collision'
     np.save("controlled_collision.npy", result)

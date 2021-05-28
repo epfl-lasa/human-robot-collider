@@ -68,7 +68,7 @@ class Simulator:
         walker_scaling=1.0,
         show_GUI=True,
         timestep=0.01,
-        collision_timestep=0.01,
+        collision_timestep=0.00005,
         make_video=False,
         fast_forward=False
     ):
@@ -85,8 +85,8 @@ class Simulator:
         distance = self.DISTANCE
         robot_radius = 0.6
         human_radius = 0.6 * walker_scaling
-        self.nominal_human_speed = 1.1124367713928223 * 0.95 * walker_scaling
-        self.nominal_robot_speed = 2.0
+        self.nominal_human_speed = 0.5
+        self.nominal_robot_speed = 0.5
 
         miss_angle_tmp = np.arccos(np.sqrt(1 - (robot_radius+human_radius)**2 / distance**2))
         self.miss_angle_lower_threshold = np.pi - miss_angle_tmp
@@ -106,7 +106,7 @@ class Simulator:
                               robot_target_velocities,
                               robot_cmd_velocities,
                               contact_pt_velocity,
-                              contact_pt_loc):
+                              contact_pt_loc,deformation, el_mod_r, el_mod_h, spr_cte):
         f, ax = plt.subplots(2, 2, sharex=True)
 
         time = np.arange(collision_forces.shape[0]) * self.collision_timestep
@@ -116,25 +116,34 @@ class Simulator:
         ax[0, 0].set_ylabel("Force [N]")
         ax[0, 0].grid()
 
-        ax[0, 1].plot(time, robot_target_velocities[:, 0], color=(0, 0.4470, 0.7410, 1))
-        ax[0, 1].plot(time, robot_cmd_velocities[:, 0], linestyle="--", color=(0, 0.4470, 0.7410, 0.8))
+        #ax[0, 1].plot(time, robot_target_velocities[:, 0], color=(0, 0.4470, 0.7410, 1))
+        #ax[0, 1].plot(time, robot_cmd_velocities[:, 0], linestyle="--", color=(0, 0.4470, 0.7410, 0.8))
+        #ax[0, 1].set_xlabel("Time [s]")
+        #ax[0, 1].set_ylabel("v [m/s]", color=(0, 0.4470, 0.7410, 1))
+        #ax[0, 1].tick_params(axis='y', labelcolor=(0, 0.4470, 0.7410, 1))
+        #ax[0, 1].grid()
+        #ax_ = ax[0, 1].twinx()
+        #ax_.plot(time, robot_target_velocities[:, 1], color=(0.8500, 0.3250, 0.0980, 1))
+        #ax_.plot(time, robot_cmd_velocities[:, 1], linestyle="--", color=(0.8500, 0.3250, 0.0980, 0.8))
+        #ax_.set_ylabel("omega [rad/s]", color=(0.8500, 0.3250, 0.0980, 1))
+        #ax_.tick_params(axis='y', labelcolor=(0.8500, 0.3250, 0.0980, 1))
+        ax[0, 1].plot(time, el_mod_r, color=(0, 0.4470, 0.7410, 1))
         ax[0, 1].set_xlabel("Time [s]")
-        ax[0, 1].set_ylabel("v [m/s]", color=(0, 0.4470, 0.7410, 1))
+        ax[0, 1].set_ylabel("r [m/s]", color=(0, 0.4470, 0.7410, 1))
         ax[0, 1].tick_params(axis='y', labelcolor=(0, 0.4470, 0.7410, 1))
         ax[0, 1].grid()
         ax_ = ax[0, 1].twinx()
-        ax_.plot(time, robot_target_velocities[:, 1], color=(0.8500, 0.3250, 0.0980, 1))
-        ax_.plot(time, robot_cmd_velocities[:, 1], linestyle="--", color=(0.8500, 0.3250, 0.0980, 0.8))
-        ax_.set_ylabel("omega [rad/s]", color=(0.8500, 0.3250, 0.0980, 1))
+        ax_.plot(time, el_mod_h, color=(0.8500, 0.3250, 0.0980, 1))
+        ax_.set_ylabel("h [rad/s]", color=(0.8500, 0.3250, 0.0980, 1))
         ax_.tick_params(axis='y', labelcolor=(0.8500, 0.3250, 0.0980, 1))
 
-        ax[1, 0].plot(time, contact_pt_loc)
+        ax[1, 0].plot(time, deformation)
         ax[1, 0].set_xlabel("Time [s]")
-        ax[1, 0].set_ylabel("theta [deg]")
+        ax[1, 0].set_ylabel("deform [m]")
         ax[1, 0].grid()
         if len(contact_pt_velocity) > 0:
             time = np.arange(contact_pt_velocity.shape[0]) * self.collision_timestep
-            ax[1, 1].plot(time, contact_pt_velocity)
+            ax[1, 1].plot(time, robot_target_velocities[:, 0])
             ax[1, 1].set_xlabel("Time [s]")
             ax[1, 1].set_ylabel("V_contact [m/s]")
             ax[1, 1].grid()
@@ -153,12 +162,13 @@ class Simulator:
         human_angle=0,
         gait_phase=0,
         human_speed_factor=1.0,
-        robot_speed_factor=0.6
+        robot_speed_factor=1.0
     ):
         human_speed = self.nominal_human_speed * human_speed_factor
         robot_speed = self.nominal_robot_speed * robot_speed_factor
         human_velocity = human_speed*np.array([np.cos(human_angle), np.sin(human_angle)])
         robot_velocity = robot_speed*np.array([np.cos(robot_angle), np.sin(robot_angle)])
+        #print(robot_speed_factor)
         relative_velocity = human_velocity - robot_velocity
         relative_speed = np.sqrt(np.dot(relative_velocity, relative_velocity))
         angle_relative_v = pos_atan(relative_velocity[1], relative_velocity[0])
@@ -179,6 +189,10 @@ class Simulator:
             robot_cmd_velocities = []
             contact_pt_velocity = []
             contact_pt_loc = []
+            deformation = []
+            el_mod_r = []
+            el_mod_h = []
+            spr_cte = []
             sim_timestep = self.timestep
             self.robot.timestep = self.timestep
             self.human.timestep = self.timestep
@@ -206,12 +220,12 @@ class Simulator:
             t_collision_over = None
             t_collision_start = None
             while t < self.t_max:
-                sim_timestep = self.__step(
+                sim_timestep, relative_speed = self.__step(
                     collision_forces,
                     robot_target_velocities,
                     robot_cmd_velocities,
                     contact_pt_velocity,
-                    contact_pt_loc,
+                    contact_pt_loc, relative_speed, deformation, el_mod_r, el_mod_h, spr_cte
                 )
                 t += sim_timestep
 
@@ -249,7 +263,7 @@ class Simulator:
 
                 if self.show_GUI:
                     time.sleep(sim_timestep)
-
+            relative_speed = np.sqrt(np.dot(relative_velocity, relative_velocity))
             collision_forces = np.array(collision_forces)
             robot_target_velocities = np.array(robot_target_velocities)
             robot_cmd_velocities = np.array(robot_cmd_velocities)
@@ -267,7 +281,7 @@ class Simulator:
                     robot_target_velocities,
                     robot_cmd_velocities,
                     contact_pt_velocity,
-                    contact_pt_loc
+                    contact_pt_loc, deformation, el_mod_r, el_mod_h, spr_cte
                 )
             return collision_forces
 
@@ -309,7 +323,7 @@ class Simulator:
                robot_target_velocities,
                robot_cmd_velocities,
                contact_pt_velocity,
-               contact_pt_loc):
+               contact_pt_loc, relative_speed, deformation, el_mod_r, el_mod_h, spr_cte):
         self.robot.advance()
         xyz, quaternion = p.invertTransform(self.robot.global_xyz, self.robot.global_quaternion)
         self.human.advance(xyz, quaternion)
@@ -319,11 +333,16 @@ class Simulator:
 #+ self.collider.delta_v
         global total_hitlist
         global parts_hitlist
-        F, parts_hitlist,total_hitlist = self.collider.get_collision_force()
-
+        F, parts_hitlist,total_hitlist, Speed, deform, el_r, el_h, K = self.collider.get_collision_force()
+        #print(relative_speed)
         if F is not None:
+            self.human.fix()
             # ---- Collision Detected ----
-
+            v = relative_speed
+            #print(v)
+            omega = 0
+            self.robot.set_speed(v, omega)
+            self.cmd_robot_speed = (v, omega)
             # Update timesteps
             self.robot.timestep = self.collision_timestep
             self.human.timestep = self.collision_timestep
@@ -332,20 +351,27 @@ class Simulator:
             p.setTimeStep(self.collision_timestep, self.physics_client_id)
             # Control Step
             (v, omega) = self.controller.update(
+                self.nominal_robot_speed, 
+                Speed = Speed,
                 F=F,
                 v_prev=self.robot.v ,
                 omega_prev=self.robot.omega + self.collider.delta_omega,
                 v_cmd=self.cmd_robot_speed[0],
-                omega_cmd=self.cmd_robot_speed[1],
+                omega_cmd=self.cmd_robot_speed[1], deformation = deform
             )
+
             self.robot.set_speed(v, omega)
             self.cmd_robot_speed = (v, omega)
-            self.human.fix()
+            relative_speed = v
             #self.human.regress()
 
             # Store data
             robot_cmd_velocities.append(self.cmd_robot_speed)
             collision_forces.append(np.hstack([F, self.controller._Fmag]))
+            deformation.append(deform)
+            el_mod_r.append(el_r)
+            el_mod_h.append(el_h)
+            spr_cte.append(K)
             robot_target_velocities.append([self.robot.v, self.robot.omega])
             try:
                 contact_pt_velocity.append(self.controller.V_contact)
@@ -359,14 +385,14 @@ class Simulator:
                 self.robot.set_speed(*self.cmd_robot_speed)
                 self.collision_over = True
 
-            return self.collision_timestep
+            return self.collision_timestep, relative_speed
         else:
             if len(collision_forces) > 0:
                 # No collision after collision has occured
                 #self.robot.set_speed(0, 0)
                 self.robot.set_speed(*self.cmd_robot_speed)
                 self.collision_over = True
-            return self.timestep
+            return self.timestep, relative_speed
     def fetch_hitlists(self):
         global total_hitlist
         global parts_hitlist
