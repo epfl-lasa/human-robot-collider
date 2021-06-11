@@ -2,7 +2,11 @@
 
 from . import Controller
 import numpy as np
+#Mass definition
+H_mass = 75
 
+timestep = 0.00005
+acc_factor = 1
 class NoControl(Controller):
     """No control implemenation"""
 
@@ -43,7 +47,6 @@ class NoControl(Controller):
     		return (v_cmd, omega_cmd)
     def __control(self, v_prev, omega_prev, v_cmd, omega_cmd, nominal_robot_speed, speed, deformation):
         """Get new velocity
-		F = robot_mass \Delta \ddot{x} + Damping_gain \Delta \dot{x} + K \Delta x + f + s, f: friction, s:static force = 0
         Parameters
         ----------
         v_prev : float
@@ -61,29 +64,8 @@ class NoControl(Controller):
             Tuple containing linear and rotational velocity after compliant control
         """
         friction_coef = 0.004
-        """
-        if (nominal_robot_speed == 1):
-	        if (v_prev>=0.0 and v_prev<=0.7):
-	        	v_prev = 0.94*v_prev
-	        	#acc = 0
-	        	acc =  0.04*(- self._Fmag - friction_coef * self.robot_mass*9.81)/self.robot_mass
-	        #elif (v_prev>0.0 and v_prev < 0.0):
-	        #	acc =  0.12*(- self._Fmag - friction_coef * self.robot_mass*9.81)/self.robot_mass
-	        else:
-	        	acc =  (- 1.0*self._Fmag - friction_coef * self.robot_mass*9.81)/self.robot_mass
-        elif(nominal_robot_speed ==1.5):
-        	if (v_prev>=0.34 and v_prev<=0.8):
-	        	v_prev = 0.85*v_prev
-	        	acc =  0.01*(- self._Fmag - friction_coef * self.robot_mass*9.81)/self.robot_mass
-	        elif (v_prev>0.1 and v_prev < 0.34):
-	        	acc =  0.215*(- self._Fmag - friction_coef * self.robot_mass*9.81)/self.robot_mass
-	        else:
-	        	acc =  (- 1.0*self._Fmag - friction_coef * self.robot_mass*9.81)/self.robot_mass
-        else:
-        """
-        #For head change 75 to 5 and 208 to 138
-        acc =  (-0.2*v_prev - 1.0*self._Fmag - friction_coef * self.robot_mass*9.81)/(self.robot_mass*75/208)
-        v = acc*0.00005 + v_prev 
+        acc =  (- 1.0*self._Fmag - friction_coef * self.robot_mass*9.81)/(self.robot_mass*H_mass/(self.robot_mass+H_mass))
+        v = acc_factor*acc*timestep + v_prev 
         omega = omega_cmd
         self.V_contact  = v
         return (v, omega_cmd)
