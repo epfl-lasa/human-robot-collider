@@ -11,11 +11,11 @@ for index in range(len(a)):
 #for index in range(len(c)):
 #    if np.size(c[index])>1:
  #       d.append(c[index])
-scipy.io.savemat('result_phase_1.mat', {'mydata': b})
+scipy.io.savemat('result.mat', {'mydata': b})
 from matplotlib import pyplot as plt
 fig, (ax1, ax2) = plt.subplots(1, 2)
 fig.suptitle('Horizontally stacked subplots')
-ax1.plot(b[4])
-ax2.plot(d[0])
-#plt.plot(b[0])
+#ax1.plot(b[4])
+plt.plot(b[0])
+plt.show()
 #plt.subplot(d[0])

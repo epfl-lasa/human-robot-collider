@@ -10,6 +10,7 @@ __author__ = 'Vaibhav Gupta'
 import time
 import os
 import logging
+import math
 
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
@@ -20,7 +21,7 @@ import numpy as np
 from collision import Collision
 parts_hitlist = np.zeros(10)
 total_hitlist = 0
-
+next_stage = False
 def pos_atan(y, x):
     a = np.arctan2(y, x)
     if a < 0.0:
@@ -85,8 +86,8 @@ class Simulator:
         distance = self.DISTANCE
         robot_radius = 0.6
         human_radius = 0.6 * walker_scaling
-        self.nominal_human_speed = 0.5
-        self.nominal_robot_speed = 0.5
+        self.nominal_human_speed = 0.75
+        self.nominal_robot_speed = 0.75
 
         miss_angle_tmp = np.arccos(np.sqrt(1 - (robot_radius+human_radius)**2 / distance**2))
         self.miss_angle_lower_threshold = np.pi - miss_angle_tmp
@@ -116,6 +117,8 @@ class Simulator:
         ax[0, 0].set_ylabel("Force [N]")
         ax[0, 0].grid()
 
+        #Plots the velocities
+
         #ax[0, 1].plot(time, robot_target_velocities[:, 0], color=(0, 0.4470, 0.7410, 1))
         #ax[0, 1].plot(time, robot_cmd_velocities[:, 0], linestyle="--", color=(0, 0.4470, 0.7410, 0.8))
         #ax[0, 1].set_xlabel("Time [s]")
@@ -127,14 +130,17 @@ class Simulator:
         #ax_.plot(time, robot_cmd_velocities[:, 1], linestyle="--", color=(0.8500, 0.3250, 0.0980, 0.8))
         #ax_.set_ylabel("omega [rad/s]", color=(0.8500, 0.3250, 0.0980, 1))
         #ax_.tick_params(axis='y', labelcolor=(0.8500, 0.3250, 0.0980, 1))
-        ax[0, 1].plot(time, el_mod_r, color=(0, 0.4470, 0.7410, 1))
+
+        #Plots the effective elastic moduli
+
+        ax[0, 1].plot(time[3:], el_mod_r[3:], color=(0, 0.4470, 0.7410, 1))
         ax[0, 1].set_xlabel("Time [s]")
-        ax[0, 1].set_ylabel("r [m/s]", color=(0, 0.4470, 0.7410, 1))
+        ax[0, 1].set_ylabel("Robot elastic mod", color=(0, 0.4470, 0.7410, 1))
         ax[0, 1].tick_params(axis='y', labelcolor=(0, 0.4470, 0.7410, 1))
         ax[0, 1].grid()
         ax_ = ax[0, 1].twinx()
         ax_.plot(time, el_mod_h, color=(0.8500, 0.3250, 0.0980, 1))
-        ax_.set_ylabel("h [rad/s]", color=(0.8500, 0.3250, 0.0980, 1))
+        ax_.set_ylabel("Human elastic mod", color=(0.8500, 0.3250, 0.0980, 1))
         ax_.tick_params(axis='y', labelcolor=(0.8500, 0.3250, 0.0980, 1))
 
         ax[1, 0].plot(time, deformation)
@@ -164,6 +170,7 @@ class Simulator:
         human_speed_factor=1.0,
         robot_speed_factor=1.0
     ):
+        first_peak = False
         human_speed = self.nominal_human_speed * human_speed_factor
         robot_speed = self.nominal_robot_speed * robot_speed_factor
         human_velocity = human_speed*np.array([np.cos(human_angle), np.sin(human_angle)])
@@ -183,6 +190,7 @@ class Simulator:
             self.robot.reset()
 
             t = 0
+            t_init = 0
             reset_human(self.human, self.DISTANCE, robot_angle, human_angle, gait_phase)
             collision_forces = []
             robot_target_velocities = []
@@ -220,6 +228,7 @@ class Simulator:
             t_collision_over = None
             t_collision_start = None
             while t < self.t_max:
+                first_peak = False
                 sim_timestep, relative_speed = self.__step(
                     collision_forces,
                     robot_target_velocities,
@@ -228,10 +237,19 @@ class Simulator:
                     contact_pt_loc, relative_speed, deformation, el_mod_r, el_mod_h, spr_cte
                 )
                 t += sim_timestep
-
+                if len(collision_forces) > 0:
+                    #Threshold for collision mode activation:
+                    if collision_forces[-1][-1] >= 15.3 and t_init == 0:
+                        t_init = t
+                    #First peak comes to end if the contact force is smaller than a certain value 
+                    if (((collision_forces[-1][-1] <= 150*(self.nominal_robot_speed**2) or math.isnan(collision_forces[-1][-1])) and t_init!=0 and t-t_init>(0.002/self.nominal_robot_speed)) or 
+                         first_peak is True or self.robot.v <= 0.001):
+                        first_peak = True
+                        next_stage = True
+                        break
                 # Save Video Frame for recording
                 if self.make_video:
-                    if t % 0.1 < 1e-6 or 0.1 - (t % 0.1) < 1e-6:
+                    if t % 0.1 < 1e-6 or 0.1 - (t % 0.01) < 1e-6:
                         w, h, img, _, _ = p.getCameraImage(
                             1920, 1080,
                             renderer=p.ER_BULLET_HARDWARE_OPENGL,

@@ -15,16 +15,16 @@ eff_mass_human = np.array([
     40, 	   # chest
     40, 	   # belly
     40, 	   # pelvis
-    75, 75,    # upper legs    <-- Previous implementation was different
-    75, 75,    # shins         <-- Previous implementation was different
-    75, 75,    # ankles/feet (Same as shin)    <-- Previous implementation was different
+    75, 75,    # upper legs   
+    75, 75,    # shins         
+    75, 75,    # ankles/feet (Same as shin)    
     3, 3,      # upper arms
     2, 2,      # forearms
     0.6, 0.6,  # hands
     1.2, 	   # neck
     8.8, 	   # head + face (?)
-    75, 75,    # soles (Same as shin)  <-- Previous implementation was different
-    75, 75,    # toes (Same as shin)   <-- Previous implementation was different
+    75, 75,    # soles (Same as shin)  
+    75, 75,    # toes (Same as shin)   
     40, 	   # chest (back)
     40, 	   # belly (back)
     40, 	   # pelvis (back)
@@ -39,14 +39,14 @@ eff_spring_const_human = np.array([
     25, 	 # pelvis
     50, 50,  # upper legs
     60, 60,  # shins
-    75, 75,  # ankles/feet (Same as shin)    <-- From Previous implementation
-    30, 30,  # upper arms    <-- Previous implementation was different
-    40, 40,  # forearms      <-- Previous implementation was different
+    75, 75,  # ankles/feet (Same as shin)   
+    30, 30,  # upper arms    
+    40, 40,  # forearms      
     75, 75,  # hands
     50, 	 # neck
     150, 	 # head (face ?)
-    75, 75,  # soles (Same as shin)  <-- From Previous implementation
-    75, 75,  # toes (Same as shin)   <-- From Previous implementation
+    75, 75,  # soles (Same as shin)  
+    75, 75,  # toes (Same as shin)   
     35, 	 # chest (back)
     35, 	 # belly (back)
     35, 	 # pelvis (back)
@@ -65,7 +65,7 @@ elastic_mod_human_adult = np.array([
     2, 2,      # forearms
     0.6, 0.6,  # hands
     6.5, 	   # neck
-    4.7, 	   # head + face (?)
+    9.9, 	   # head + face (?)
     0.634, 0.634,    # soles (Same as shin)  <-- Previous implementation was different
     0.634, 0.634,    # toes (Same as shin)   <-- Previous implementation was different
     7.44, 	   # chest (back)
@@ -94,15 +94,57 @@ human_radius_adult = np.array([
     0.09, 	   # neck (back)
     0.1, 	   # head (back)
 ])
-elastic_mod_human = 6.5*1e9
-poisson_ratio_human_bone = 0.22
-human_radius_head = 0.056
-poisson_ratio_human_leg = 0.269
-human_radius_leg = 0.039
+
+#/!\ALL VALUES TO BE CHANGED, EXCEPT FOR THE HEAD 
+
+elastic_mod_human_child = np.array([
+    7.44,      # chest
+    7.44,      # belly
+    11,        # pelvis
+    17.1, 17.1,    # upper legs    <-- Previous implementation was different
+    0.634, 0.634,    # shins         <-- Previous implementation was different
+    0.634, 0.634,    # ankles/feet (Same as shin)    <-- Previous implementation was different
+    3, 3,      # upper arms
+    2, 2,      # forearms
+    0.6, 0.6,  # hands
+    6.5,       # neck
+    4.7,       # head + face (?)
+    0.634, 0.634,    # soles (Same as shin)  <-- Previous implementation was different
+    0.634, 0.634,    # toes (Same as shin)   <-- Previous implementation was different
+    7.44,      # chest (back)
+    7.44,      # belly (back)
+    11,        # pelvis (back)
+    6.5,       # neck (back)
+    4.7,       # head (back)
+]) *1e9
+human_radius_child = np.array([
+    0.27,      # chest
+    0.25,      # belly
+    0.21,      # pelvis
+    0.07, 0.07,    # upper legs    <-- Previous implementation was different
+    0.039, 0.039,    # shins         <-- Previous implementation was different
+    0.039, 0.039,    # ankles/feet (Same as shin)    <-- Previous implementation was different
+    0.06, 0.06,      # upper arms
+    0.03, 0.03,      # forearms
+    0.6, 0.6,  # hands
+    0.09,      # neck
+    0.05,      # head + face (?)
+    0.039, 0.039,    # soles (Same as shin)  <-- Previous implementation was different
+    0.039, 0.039,    # toes (Same as shin)   <-- Previous implementation was different
+    0.27,      # chest (back)
+    0.25,      # belly (back)
+    0.21,      # pelvis (back)
+    0.09,      # neck (back)
+    0.1,       # head (back)
+])
+
+#Scalp physical values
+
 elastic_mod_scalp = 16.7*1e6
 poisson_ratio_scalp = 0.42
 scalp_width = 0.003
 
+#Robot physical constants
 
 eff_mass_robot = np.array([
     50,   # Main Body
@@ -124,6 +166,24 @@ robot_radius = 0.4
 elastic_mod_robot_cover = 3300*1e6
 poisson_ratio_robot_cover = 0.41
 cover_width = 0.02
+
+#Hyperparameters
+Ea = 5e11
+Eb = 2.55e10
+m = 1
+nh = 0.3
+nr = 2.3
+x = 0.3
+rat_cov_h = 0.65
+rat_cov_r = 0.75
+damp_coef = 7e8
+herz = 2.5
+#Bools to switch between child and adult and Herzian models
+
+Child = True
+Default = True
+
+#Variables for plotting
 hit_counter_part = np.zeros(10)
 hit_counter_total = 0
 delta_robot = 0
@@ -218,8 +278,6 @@ class Collision:
         for contact_point in contact_points:
             if contact_point[8] <= 0:
                 # Penetration or Contact
-                #if abs(contact_point[8]) > scalp_width:
-                #    contact_point[8] = -scalp_width 
                 human_part_id = contact_point[3]
                 robot_part_id = contact_point[4]
                 pos_on_robot = contact_point[6]
@@ -264,15 +322,14 @@ class Collision:
                 if(human_part_id == 1):
                     hit_counter_part[9] += 1 #pelvis
                     hit_counter_total += 1
-                #if (hit_counter_total<1):
                 vel_init = self.robot.v
                 deformation = -self.robot.v*0.00005+deformation 
                 if deformation<0:
                     self.__collide(robot_part_id, human_part_id, deformation, self.robot.v)
                     #print(deformation, contact_point[8])
                     Speed = 0
-                    Fmag = self.__get_contact_force(deformation)
-                    Speed = self._get_passed_velocity(deformation, Fmag, Speed)
+                    Fmag = self.__get_contact_force(deformation, self.robot.v)
+                    Speed = self.robot.v
                 else: 
                     Fmag = 0
                     Speed = 0
@@ -313,21 +370,12 @@ class Collision:
         global el_mod_h
         self.eff_mass_robot = self.__get_eff_mass_robot(robot_part_id)
         self.eff_mass_human = self.__get_eff_mass_human(human_part_id)
-        #if penetration > 0:
-        k_robot = self.__get_eff_spring_const_human(robot_part_id)
-        k_human = self.__get_eff_spring_const_human(human_part_id)
+
         el_mod_r = self.__get_eff_elastic_mod_robot(robot_part_id, penetration, vel_init)
         el_mod_h = self.__get_eff_elastic_mod_human(human_part_id, penetration, vel_init)
-        #self.eff_spring_const = 1 / (1/k_robot + 1/k_human)
 
-        #OUTDATED CODE FOR ABBERANT VALUES
-        #else:
-        #print(prev_constant)
-        #if (abs((4/3)*(1/(((1-(poisson_ratio_robot_cover**2))/self.__get_eff_elastic_mod_robot(robot_part_id, penetration,vel_init))+((1-(poisson_ratio_scalp**2))/self.__get_eff_elastic_mod_human(human_part_id, penetration,vel_init))))*(((1/(scalp_width+human_radius_adult[human_part_id]))+(1/(cover_width+robot_radius)))**(-1/2)) - prev_constant) > 1e6):
-         #   self.eff_spring_const = prev_constant
-         #   prev_constant = abs((4/3)*(1/(((1-(poisson_ratio_robot_cover**2))/self.__get_eff_elastic_mod_robot(robot_part_id, penetration, vel_init))+((1-(poisson_ratio_scalp**2))/self.__get_eff_elastic_mod_human(human_part_id, penetration, vel_init))))*(((1/(scalp_width+human_radius_adult[human_part_id]))+(1/(cover_width+robot_radius)))**(-1/2)))
-        #else:
-        self.eff_spring_const = (4/3)*(1/(((1-(poisson_ratio_robot_cover**2))/self.__get_eff_elastic_mod_robot(robot_part_id, penetration, vel_init))+((1-(poisson_ratio_scalp**2))/self.__get_eff_elastic_mod_human(human_part_id, penetration,vel_init))))*(((1/(scalp_width+human_radius_adult[human_part_id]))+(1/(cover_width+robot_radius)))**(-1/2))
+        self.eff_spring_const = ((4/3)*(1/(((1-(poisson_ratio_robot_cover**2))/self.__get_eff_elastic_mod_robot(robot_part_id, penetration, vel_init))+((1-(poisson_ratio_scalp**2))/self.__get_eff_elastic_mod_human(human_part_id, penetration,vel_init))))*
+                                (((1/(scalp_width+human_radius_adult[human_part_id]))+(1/(cover_width+robot_radius)))**(-1/2)))
         prev_constant = self.eff_spring_const
 
 
@@ -395,27 +443,26 @@ class Collision:
         if penetration > 0:
             return 0
         else:
-            eff_elastic_mod_human = 1+(((elastic_mod_scalp/(elastic_mod_human_adult[part_id]))-1)*np.exp((pow((-penetration/scalp_width), 0.5))*pow((elastic_mod_scalp/elastic_mod_human_adult[part_id]), 0.95)))
-            #print('1',1.55e5*eff_elastic_mod_human)
-            #eff_elastic_mod_human = np.sqrt(np.real(eff_elastic_mod_human)**2+np.imag(eff_elastic_mod_human)**2)
-
-            #Ea=-1.3e7, nh=0.5, compr_coef = 0.95 for adult
-            #Ea = -8.3e8, nh = 3.5, comp_coef = 0.75 for child
-            return (-1.3e7*(vel_init**1.25)*eff_elastic_mod_human)
+            if(Child):
+                eff_elastic_mod_human = 1+(((elastic_mod_scalp/(elastic_mod_human_child[part_id]))-1)*np.exp((pow((-penetration/scalp_width), nh))*pow((elastic_mod_scalp/elastic_mod_human_child[part_id]), rat_cov_h)))
+            else:
+                eff_elastic_mod_human = 1+(((elastic_mod_scalp/(elastic_mod_human_adult[part_id]))-1)*np.exp((pow((-penetration/scalp_width), nh))*pow((elastic_mod_scalp/elastic_mod_human_adult[part_id]), rat_cov_h)))
+            if(Default):
+                return (Ea*eff_elastic_mod_human)
+            else:
+                return (Ea*eff_elastic_mod_human*(vel_init**m))
     	
     def __get_eff_elastic_mod_robot(self, part_id,penetration, vel_init):
         if penetration > 0:
             return 0
         else:
-            eff_elastic_mod_robot = 1+(((elastic_mod_robot_cover/elastic_mod_robot)-1)*np.exp((pow(-penetration/(3.1*cover_width),0.5))*pow((elastic_mod_robot_cover/elastic_mod_robot),0.95)))
-            #eff_elastic_mod_robot = np.sqrt(np.real(eff_elastic_mod_robot)**2+np.imag(eff_elastic_mod_robot)**2)
-            #print('2',1.55e5*eff_elastic_mod_robot)
+            eff_elastic_mod_robot = 1+(((elastic_mod_robot_cover/elastic_mod_robot)-1)*np.exp((pow(-penetration/(x*cover_width),nr))*pow((elastic_mod_robot_cover/elastic_mod_robot),rat_cov_r)))
+            if(Default):
+                return (Eb*eff_elastic_mod_robot)
+            else:
+                return (Eb*eff_elastic_mod_robot*(vel_init**m))
 
-            #Eb = 2e8 for adult, 3.1 for x
-            #Eb = 3.4e8 for child
-            return (2e8*(vel_init**1.25)*eff_elastic_mod_robot)
-
-    def __get_contact_force(self, penetration):
+    def __get_contact_force(self, penetration, vel_init):
         """Get contact force based on penetration
 
         Parameters
@@ -432,33 +479,11 @@ class Collision:
             # No Contact
             return 0
         else:
-            #print(penetration, self.eff_spring_const,self.eff_spring_const * (abs(penetration)**1.5))
-            return (self.eff_spring_const) * (abs(penetration)**1.5)
+            if(Default):
+                return (self.eff_spring_const) * (abs(penetration)**herz) + ((vel_init)**m)*(damp_coef*(abs(penetration)**herz))
+            else:
+                return (self.eff_spring_const) * (abs(penetration)**herz)
 
-    def _get_passed_velocity(self, penetration, force, speed):
-        """Get velocity passed to human body part
-
-        Parameters
-        ----------
-        penetration : float
-            Penetration of robot into human
-
-        Returns
-        -------
-        float
-            Effective Contact Force
-        
-        if penetration > 0:
-            # No Contact
-            return 0
-        else:
-            work = abs(force*penetration)
-            speed = np.sqrt(2*work/(self.human_mass*self.robot_mass/(self.human_mass+self.robot_mass)))
-            return speed
-        """
-        speed = (0.9*self.robot_mass*(self.robot.v) + self.robot_mass*self.robot.v)/(self.robot_mass+self.human_mass)
-        #print(speed)
-        return speed
     def __get_loc_on_bumper(self, pos):
         theta = np.arctan2(pos[0] - self.ftsensor_loc[1], - pos[1] - self.ftsensor_loc[0])
         h = self.bumper_height - pos[2]
