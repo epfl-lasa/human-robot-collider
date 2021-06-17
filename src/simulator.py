@@ -175,7 +175,6 @@ class Simulator:
         robot_speed = self.nominal_robot_speed * robot_speed_factor
         human_velocity = human_speed*np.array([np.cos(human_angle), np.sin(human_angle)])
         robot_velocity = robot_speed*np.array([np.cos(robot_angle), np.sin(robot_angle)])
-        #print(robot_speed_factor)
         relative_velocity = human_velocity - robot_velocity
         relative_speed = np.sqrt(np.dot(relative_velocity, relative_velocity))
         angle_relative_v = pos_atan(relative_velocity[1], relative_velocity[0])
@@ -184,13 +183,13 @@ class Simulator:
             and relative_speed > self.miss_speed_threshold
         ):
             # Collision is possible
+            t = 0
+            t_init = 0
             self.cmd_robot_speed = (robot_speed, 0)
             self.collision_over = False
             self.robot.set_speed(*self.cmd_robot_speed)
             self.robot.reset()
 
-            t = 0
-            t_init = 0
             reset_human(self.human, self.DISTANCE, robot_angle, human_angle, gait_phase)
             collision_forces = []
             robot_target_velocities = []
@@ -228,25 +227,34 @@ class Simulator:
             t_collision_over = None
             t_collision_start = None
             while t < self.t_max:
-                first_peak = False
-                sim_timestep, relative_speed = self.__step(
-                    collision_forces,
-                    robot_target_velocities,
-                    robot_cmd_velocities,
-                    contact_pt_velocity,
-                    contact_pt_loc, relative_speed, deformation, el_mod_r, el_mod_h, spr_cte
-                )
-                t += sim_timestep
                 if len(collision_forces) > 0:
                     #Threshold for collision mode activation:
                     if collision_forces[-1][-1] >= 15.3 and t_init == 0:
                         t_init = t
                     #First peak comes to end if the contact force is smaller than a certain value 
-                    if (((collision_forces[-1][-1] <= 150*(self.nominal_robot_speed**2) or math.isnan(collision_forces[-1][-1])) and t_init!=0 and t-t_init>(0.002/self.nominal_robot_speed)) or 
+                    if (((collision_forces[-1][-1] <= 150*(self.nominal_robot_speed**2) or math.isnan(collision_forces[-1][-1])) and t_init!=0 and t-t_init>(0.003/self.nominal_robot_speed)) or 
                          first_peak is True or self.robot.v <= 0.001):
+                        self.collision_over = True
                         first_peak = True
                         next_stage = True
+                        sim_timestep, relative_speed = self.__step(
+                            collision_forces,
+                            robot_target_velocities,
+                            robot_cmd_velocities,
+                            contact_pt_velocity,
+                            contact_pt_loc, relative_speed, deformation, el_mod_r, el_mod_h, spr_cte, self.collision_over
+                        )
                         break
+                sim_timestep, relative_speed = self.__step(
+                    collision_forces,
+                    robot_target_velocities,
+                    robot_cmd_velocities,
+                    contact_pt_velocity,
+                    contact_pt_loc, relative_speed, deformation, el_mod_r, el_mod_h, spr_cte, self.collision_over
+                )
+                first_peak = False
+                t += sim_timestep
+                
                 # Save Video Frame for recording
                 if self.make_video:
                     if t % 0.1 < 1e-6 or 0.1 - (t % 0.01) < 1e-6:
@@ -341,7 +349,7 @@ class Simulator:
                robot_target_velocities,
                robot_cmd_velocities,
                contact_pt_velocity,
-               contact_pt_loc, relative_speed, deformation, el_mod_r, el_mod_h, spr_cte):
+               contact_pt_loc, relative_speed, deformation, el_mod_r, el_mod_h, spr_cte, reset):
         self.robot.advance()
         xyz, quaternion = p.invertTransform(self.robot.global_xyz, self.robot.global_quaternion)
         self.human.advance(xyz, quaternion)
@@ -351,13 +359,12 @@ class Simulator:
 #+ self.collider.delta_v
         global total_hitlist
         global parts_hitlist
-        F, parts_hitlist,total_hitlist, Speed, deform, el_r, el_h, K = self.collider.get_collision_force()
+        F, parts_hitlist,total_hitlist, Speed, deform, el_r, el_h, K = self.collider.get_collision_force(reset)
         #print(relative_speed)
         if F is not None:
             self.human.fix()
             # ---- Collision Detected ----
             v = relative_speed
-            #print(v)
             omega = 0
             self.robot.set_speed(v, omega)
             self.cmd_robot_speed = (v, omega)
@@ -401,7 +408,6 @@ class Simulator:
                 # Collision has gone below threshold
                 #self.robot.set_speed(0, 0)
                 self.robot.set_speed(*self.cmd_robot_speed)
-                self.collision_over = True
 
             return self.collision_timestep, relative_speed
         else:

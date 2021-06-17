@@ -168,20 +168,20 @@ poisson_ratio_robot_cover = 0.41
 cover_width = 0.02
 
 #Hyperparameters
-Ea = 5e11
-Eb = 2.55e10
-m = 1
+Ea = -1.3e7
+Eb = 1.4e8
+m = 1.25
 nh = 0.3
 nr = 2.3
-x = 0.3
+x = 3
 rat_cov_h = 0.65
 rat_cov_r = 0.75
 damp_coef = 7e8
-herz = 2.5
+herz = 1.7
 #Bools to switch between child and adult and Herzian models
 
-Child = True
-Default = True
+Child = False
+Default = False
 
 #Variables for plotting
 hit_counter_part = np.zeros(10)
@@ -256,7 +256,7 @@ class Collision:
         self.ftsensor_loc = ftsensor_loc
         self.timestep = timestep
 
-    def get_collision_force(self):
+    def get_collision_force(self, reset):
         """Get collision force in case of collision
 
         Returns
@@ -265,6 +265,7 @@ class Collision:
             In case of no collision, returns `None` otherwise returns an array containing contact forces and moments.
             Order of force and moments is [Fx, Fy, Fz, Mx, My, Mz]
         """
+
         contact_points = p.getContactPoints(
             self.human.body_id,
             self.robot.body_id,
@@ -275,6 +276,9 @@ class Collision:
         global el_mod_r
         global el_mod_h
         global vel_init
+        print(reset)
+        if reset:
+            deformation = 0
         for contact_point in contact_points:
             if contact_point[8] <= 0:
                 # Penetration or Contact
