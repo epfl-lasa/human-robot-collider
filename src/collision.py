@@ -187,7 +187,6 @@ Default = False
 hit_counter_part = np.zeros(10)
 hit_counter_total = 0
 delta_robot = 0
-prev_constant = 0
 deformation = 0
 el_mod_r = 0
 el_mod_h = 0
@@ -276,7 +275,7 @@ class Collision:
         global el_mod_r
         global el_mod_h
         global vel_init
-        print(reset)
+
         if reset:
             deformation = 0
         for contact_point in contact_points:
@@ -369,9 +368,9 @@ class Collision:
         human_part_id : int
             Part ID of colliding part of human
         """
-        global prev_constant
         global el_mod_r
         global el_mod_h
+
         self.eff_mass_robot = self.__get_eff_mass_robot(robot_part_id)
         self.eff_mass_human = self.__get_eff_mass_human(human_part_id)
 
@@ -380,7 +379,6 @@ class Collision:
 
         self.eff_spring_const = ((4/3)*(1/(((1-(poisson_ratio_robot_cover**2))/self.__get_eff_elastic_mod_robot(robot_part_id, penetration, vel_init))+((1-(poisson_ratio_scalp**2))/self.__get_eff_elastic_mod_human(human_part_id, penetration,vel_init))))*
                                 (((1/(scalp_width+human_radius_adult[human_part_id]))+(1/(cover_width+robot_radius)))**(-1/2)))
-        prev_constant = self.eff_spring_const
 
 
     def __get_eff_mass_human(self, part_id):
@@ -448,9 +446,11 @@ class Collision:
             return 0
         else:
             if(Child):
-                eff_elastic_mod_human = 1+(((elastic_mod_scalp/(elastic_mod_human_child[part_id]))-1)*np.exp((pow((-penetration/scalp_width), nh))*pow((elastic_mod_scalp/elastic_mod_human_child[part_id]), rat_cov_h)))
+                eff_elastic_mod_human = 1+(((elastic_mod_scalp/(elastic_mod_human_child[part_id]))-1)*
+                                        np.exp((pow((-penetration/scalp_width), nh))*pow((elastic_mod_scalp/elastic_mod_human_child[part_id]), rat_cov_h)))
             else:
-                eff_elastic_mod_human = 1+(((elastic_mod_scalp/(elastic_mod_human_adult[part_id]))-1)*np.exp((pow((-penetration/scalp_width), nh))*pow((elastic_mod_scalp/elastic_mod_human_adult[part_id]), rat_cov_h)))
+                eff_elastic_mod_human = 1+(((elastic_mod_scalp/(elastic_mod_human_adult[part_id]))-1)*
+                                        np.exp((pow((-penetration/scalp_width), nh))*pow((elastic_mod_scalp/elastic_mod_human_adult[part_id]), rat_cov_h)))
             if(Default):
                 return (Ea*eff_elastic_mod_human)
             else:

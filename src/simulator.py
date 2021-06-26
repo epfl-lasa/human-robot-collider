@@ -86,8 +86,8 @@ class Simulator:
         distance = self.DISTANCE
         robot_radius = 0.6
         human_radius = 0.6 * walker_scaling
-        self.nominal_human_speed = 0.75
-        self.nominal_robot_speed = 0.75
+        self.nominal_human_speed = 1.5
+        self.nominal_robot_speed = 1.6
 
         miss_angle_tmp = np.arccos(np.sqrt(1 - (robot_radius+human_radius)**2 / distance**2))
         self.miss_angle_lower_threshold = np.pi - miss_angle_tmp
@@ -107,7 +107,7 @@ class Simulator:
                               robot_target_velocities,
                               robot_cmd_velocities,
                               contact_pt_velocity,
-                              contact_pt_loc,deformation, el_mod_r, el_mod_h, spr_cte):
+                              contact_pt_loc,deformation, el_mod_r, el_mod_h, spr_cte, acceler):
         f, ax = plt.subplots(2, 2, sharex=True)
 
         time = np.arange(collision_forces.shape[0]) * self.collision_timestep
@@ -116,7 +116,7 @@ class Simulator:
         ax[0, 0].set_xlabel("Time [s]")
         ax[0, 0].set_ylabel("Force [N]")
         ax[0, 0].grid()
-
+        ax[0, 0].set_ylim([0,5500])
         #Plots the velocities
 
         #ax[0, 1].plot(time, robot_target_velocities[:, 0], color=(0, 0.4470, 0.7410, 1))
@@ -137,15 +137,17 @@ class Simulator:
         ax[0, 1].set_xlabel("Time [s]")
         ax[0, 1].set_ylabel("Robot elastic mod", color=(0, 0.4470, 0.7410, 1))
         ax[0, 1].tick_params(axis='y', labelcolor=(0, 0.4470, 0.7410, 1))
+        ax[0, 1].set_ylim([0, 3e7])
         ax[0, 1].grid()
         ax_ = ax[0, 1].twinx()
         ax_.plot(time, el_mod_h, color=(0.8500, 0.3250, 0.0980, 1))
         ax_.set_ylabel("Human elastic mod", color=(0.8500, 0.3250, 0.0980, 1))
         ax_.tick_params(axis='y', labelcolor=(0.8500, 0.3250, 0.0980, 1))
+        ax_.set_ylim([0, 9e6])
 
-        ax[1, 0].plot(time, deformation)
+        ax[1, 0].plot(time, acceler)
         ax[1, 0].set_xlabel("Time [s]")
-        ax[1, 0].set_ylabel("deform [m]")
+        ax[1, 0].set_ylabel("acceleration [m/s2]")
         ax[1, 0].grid()
         if len(contact_pt_velocity) > 0:
             time = np.arange(contact_pt_velocity.shape[0]) * self.collision_timestep
@@ -200,6 +202,7 @@ class Simulator:
             el_mod_r = []
             el_mod_h = []
             spr_cte = []
+            acceler = []
             sim_timestep = self.timestep
             self.robot.timestep = self.timestep
             self.human.timestep = self.timestep
@@ -227,30 +230,33 @@ class Simulator:
             t_collision_over = None
             t_collision_start = None
             while t < self.t_max:
+
+                #State switch implemetation
                 if len(collision_forces) > 0:
                     #Threshold for collision mode activation:
                     if collision_forces[-1][-1] >= 15.3 and t_init == 0:
                         t_init = t
-                    #First peak comes to end if the contact force is smaller than a certain value 
-                    if (((collision_forces[-1][-1] <= 150*(self.nominal_robot_speed**2) or math.isnan(collision_forces[-1][-1])) and t_init!=0 and t-t_init>(0.003/self.nominal_robot_speed)) or 
-                         first_peak is True or self.robot.v <= 0.001):
-                        self.collision_over = True
-                        first_peak = True
-                        next_stage = True
-                        sim_timestep, relative_speed = self.__step(
-                            collision_forces,
-                            robot_target_velocities,
-                            robot_cmd_velocities,
-                            contact_pt_velocity,
-                            contact_pt_loc, relative_speed, deformation, el_mod_r, el_mod_h, spr_cte, self.collision_over
-                        )
-                        break
+                    #First peak comes after acceleration has low values (threshold at 2.5 m/s2*nominal speed^2)
+                    if len(acceler) > 1:
+                        # To cut at the peak: change "abs(acceler[-1]) < 2.5..." to "abs(acceler[-1]) > 2.5..."
+                        if (abs(acceler[-1]) < 2.5*(self.nominal_robot_speed**2) and (acceler[-1] > acceler [-2])):
+                            self.collision_over = True
+                            first_peak = True
+                            next_stage = True
+                            sim_timestep, relative_speed = self.__step(
+                                collision_forces,
+                                robot_target_velocities,
+                                robot_cmd_velocities,
+                                contact_pt_velocity,
+                                contact_pt_loc, relative_speed, deformation, el_mod_r, el_mod_h, spr_cte, True, acceler
+                            )
+                            break
                 sim_timestep, relative_speed = self.__step(
                     collision_forces,
                     robot_target_velocities,
                     robot_cmd_velocities,
                     contact_pt_velocity,
-                    contact_pt_loc, relative_speed, deformation, el_mod_r, el_mod_h, spr_cte, self.collision_over
+                    contact_pt_loc, relative_speed, deformation, el_mod_r, el_mod_h, spr_cte, self.collision_over, acceler
                 )
                 first_peak = False
                 t += sim_timestep
@@ -295,7 +301,7 @@ class Simulator:
             robot_cmd_velocities = np.array(robot_cmd_velocities)
             contact_pt_velocity = np.array(contact_pt_velocity)
             contact_pt_loc = np.array(contact_pt_loc)
-
+            acceler = np.array(acceler)
             if self.make_video:
                 writer.cleanup()
                 if len(collision_forces) <= 0:
@@ -307,7 +313,7 @@ class Simulator:
                     robot_target_velocities,
                     robot_cmd_velocities,
                     contact_pt_velocity,
-                    contact_pt_loc, deformation, el_mod_r, el_mod_h, spr_cte
+                    contact_pt_loc, deformation, el_mod_r, el_mod_h, spr_cte, acceler
                 )
             return collision_forces
 
@@ -349,18 +355,16 @@ class Simulator:
                robot_target_velocities,
                robot_cmd_velocities,
                contact_pt_velocity,
-               contact_pt_loc, relative_speed, deformation, el_mod_r, el_mod_h, spr_cte, reset):
+               contact_pt_loc, relative_speed, deformation, el_mod_r, el_mod_h, spr_cte, reset, acceler):
         self.robot.advance()
         xyz, quaternion = p.invertTransform(self.robot.global_xyz, self.robot.global_quaternion)
         self.human.advance(xyz, quaternion)
         self.ground.advance(xyz, quaternion)
 
         p.stepSimulation()
-#+ self.collider.delta_v
         global total_hitlist
         global parts_hitlist
         F, parts_hitlist,total_hitlist, Speed, deform, el_r, el_h, K = self.collider.get_collision_force(reset)
-        #print(relative_speed)
         if F is not None:
             self.human.fix()
             # ---- Collision Detected ----
@@ -375,7 +379,7 @@ class Simulator:
             self.collider.timestep = self.collision_timestep
             p.setTimeStep(self.collision_timestep, self.physics_client_id)
             # Control Step
-            (v, omega) = self.controller.update(
+            (v, omega), acc = self.controller.update(
                 self.nominal_robot_speed, 
                 Speed = Speed,
                 F=F,
@@ -388,7 +392,6 @@ class Simulator:
             self.robot.set_speed(v, omega)
             self.cmd_robot_speed = (v, omega)
             relative_speed = v
-            #self.human.regress()
 
             # Store data
             robot_cmd_velocities.append(self.cmd_robot_speed)
@@ -397,6 +400,7 @@ class Simulator:
             el_mod_r.append(el_r)
             el_mod_h.append(el_h)
             spr_cte.append(K)
+            acceler.append(acc)
             robot_target_velocities.append([self.robot.v, self.robot.omega])
             try:
                 contact_pt_velocity.append(self.controller.V_contact)
@@ -405,18 +409,18 @@ class Simulator:
                 pass
 
             if np.isnan(self.controller.V_contact):
-                # Collision has gone below threshold
-                #self.robot.set_speed(0, 0)
+                # Collision has gone below threshold (Not really used)
                 self.robot.set_speed(*self.cmd_robot_speed)
 
             return self.collision_timestep, relative_speed
         else:
             if len(collision_forces) > 0:
                 # No collision after collision has occured
-                #self.robot.set_speed(0, 0)
                 self.robot.set_speed(*self.cmd_robot_speed)
                 self.collision_over = True
             return self.timestep, relative_speed
+
+
     def fetch_hitlists(self):
         global total_hitlist
         global parts_hitlist
