@@ -40,12 +40,12 @@ class NoControl(Controller):
     	(self._Fx, self._Fy, self._Mz) = (F[0], F[1], F[5])
     	self.get_location_on_bumper(self._Fx, self._Fy, self._Mz)
     	if self._Fmag > self.activation_F:
-    		return self.__control(v_prev, omega_prev, v_cmd, omega_cmd, nominal_robot_speed, Speed, deformation)
+    		return self.__control(v_prev, omega_prev, v_cmd, omega_cmd)
     	else:
     		self.V_contact = np.nan
     		self._theta = np.nan
-    		return (v_cmd, omega_cmd)
-    def __control(self, v_prev, omega_prev, v_cmd, omega_cmd, nominal_robot_speed, speed, deformation):
+    		return (v_cmd, omega_cmd), 0 
+    def __control(self, v_prev, omega_prev, v_cmd, omega_cmd):
         """Get new velocity
         Parameters
         ----------
@@ -57,18 +57,22 @@ class NoControl(Controller):
             Demand linear velocity
         omega_cmd : float
             Demand rotational velocity
-
+		
         Returns
         -------
-        tuple(float, float)
-            Tuple containing linear and rotational velocity after compliant control
+        tuple(float, float), float
+            Tuple containing linear and rotational velocity after control, acceleration values at every time step
         """
         friction_coef = 0.004
+
         acc =  (- 1.0*self._Fmag - friction_coef * self.robot_mass*9.81)/(self.robot_mass*H_mass/(self.robot_mass+H_mass))
         v = acc_factor*acc*timestep + v_prev 
+
+       	#Placeholder values for omega and V_contact. Adapt for more elaborate model
         omega = omega_cmd
         self.V_contact  = v
-        return (v, omega_cmd)
+
+        return (v, omega_cmd), acc
 
     def __differential_to_cartesian(self, v, omega):
         return (self.jacobian @ np.array([v, omega]))
