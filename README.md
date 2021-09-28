@@ -1,6 +1,9 @@
 # human-robot-collider
 This software package simulates and analyses collisions between a walking pedestrian model and a mobile robot to investigate the risk associated to such human-robot collisions and to support safety-guided robot design. The software lets both agents approach each other and collide with different angles and speeds, using the simulation engine Bullet (via `pybullet`).
 
+<p align="center">
+<img src="https://github.com/epfl-lasa/human-robot-collider/blob/devel/media/passive_DS_child_qolo%2013.19.41.gif"  height="500"></>
+
 ## Prerequisites
 It is recommended to use a virtual environment to setup the simulation. Process to setup the environment and install all dependencies is given below.
 
@@ -37,7 +40,7 @@ python src/hrc.py -b adult -r qolo -c admittance -g
 
 - To run simulation of collision between a child and qolo using admittance controller (with gui),
 ```shell
-python src/hrc.py -b child -r qolo -c admittance -g
+python src/hrc.py -b child -r qolo -c passive_ds -g
 ```
 
 - To run simulation of collision between a child and qolo using no compliance controller (with gui),
